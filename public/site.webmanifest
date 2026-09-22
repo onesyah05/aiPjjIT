@@ -1,0 +1,16 @@
+{
+    "name": "PJJ AI — Universitas Siber Muhammadiyah",
+    "short_name": "PJJ AI",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#f5f7fb",
+    "theme_color": "#061226",
+    "icons": [
+        {
+            "src": "/images/sibermu-logo.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

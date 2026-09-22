@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        background: #f5f7fb;
+        color: #111c2d;
+    }
+
+    body {
+        min-width: 320px;
+        background:
+            radial-gradient(circle at 90% 0%, rgba(203, 217, 237, 0.38), transparent 26rem),
+            #f5f7fb;
+        color: #111c2d;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        transition-duration: 150ms;
+    }
+
+    ::selection {
+        background: #cbd9ed;
+        color: #061226;
+    }
+
+    :focus-visible {
+        outline: 3px solid #7899c4;
+        outline-offset: 2px;
+    }
+}
+
+@layer components {
+    .community-wave-field {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        opacity: 0.9;
+        mask-image: linear-gradient(to bottom, transparent, black 12%, black 88%, transparent);
+        pointer-events: none;
+    }
+
+    .community-wave-line {
+        position: absolute;
+        left: -12%;
+        width: 124%;
+        overflow: hidden;
+    }
+
+    .community-wave-track {
+        display: flex;
+        width: max-content;
+        will-change: transform;
+        animation-name: community-wave-drift;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+    }
+
+    .community-wave-track-reverse {
+        animation-direction: reverse;
+    }
+
+    .community-wave-copy {
+        flex: none;
+        padding-right: 1.5rem;
+        color: rgba(166, 188, 219, 0.17);
+        font-family: inherit;
+        font-size: clamp(2rem, 4.2vw, 4.75rem);
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.015em;
+        white-space: nowrap;
+    }
+}
+
+@keyframes community-wave-drift {
+    0% {
+        transform: translate3d(0, -5px, 0);
+    }
+
+    25% {
+        transform: translate3d(-12.5%, 5px, 0);
+    }
+
+    50% {
+        transform: translate3d(-25%, -5px, 0);
+    }
+
+    75% {
+        transform: translate3d(-37.5%, 5px, 0);
+    }
+
+    100% {
+        transform: translate3d(-50%, -5px, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .community-wave-track {
+        animation: none;
+        transform: translateX(-8%);
+    }
+}
