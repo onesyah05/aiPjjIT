@@ -92,6 +92,28 @@ class FeatureExpansionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Leaderboard')
                 ->where('leaders.0.name', 'Kontributor utama')
-                ->where('leaders.0.score', 25));
+                ->where('leaders.0.score', 25)
+                ->where('leaders.0.rank', 1));
+    }
+
+    public function test_dashboard_displays_the_top_community_contributors(): void
+    {
+        $contributor = User::factory()->create(['name' => 'Kontributor beranda']);
+        Knowledge::query()->create([
+            'user_id' => $contributor->id,
+            'title' => 'Materi unggulan',
+            'visibility' => 'community',
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($contributor)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Dashboard')
+                ->has('leaders', 1)
+                ->where('leaders.0.name', 'Kontributor beranda')
+                ->where('leaders.0.score', 25)
+                ->where('leaders.0.rank', 1));
     }
 }
