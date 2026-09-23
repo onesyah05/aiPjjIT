@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AiCredential;
+use App\Notifications\CredentialNeedsAttention;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +74,25 @@ class CredentialPoolService
         $credential->increment('failure_count');
         $credential->update(['last_error_code' => $errorCode]);
         $this->incrementDailyUsage($credential, 'failure_count');
+    }
+
+    public function markInvalid(AiCredential $credential, string $errorCode, string $reason): void
+    {
+        $shouldNotify = $credential->status !== 'invalid';
+
+        $credential->update([
+            'status' => 'invalid',
+            'last_error_code' => $errorCode,
+        ]);
+
+        if ($shouldNotify) {
+            $credential->user?->notify(new CredentialNeedsAttention(
+                credentialId: $credential->id,
+                credentialLabel: $credential->label,
+                status: 'invalid',
+                reason: $reason,
+            ));
+        }
     }
 
     private function incrementDailyUsage(AiCredential $credential, string $column): void

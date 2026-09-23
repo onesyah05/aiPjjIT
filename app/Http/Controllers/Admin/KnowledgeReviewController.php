@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReviewKnowledgeRequest;
 use App\Jobs\ProcessKnowledgeEmbedding;
 use App\Models\KnowledgeVersion;
+use App\Notifications\KnowledgeReviewUpdated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -71,6 +72,13 @@ class KnowledgeReviewController extends Controller
         if ($status === 'approved') {
             ProcessKnowledgeEmbedding::dispatch($version);
         }
+
+        $version->knowledge->user?->notify(new KnowledgeReviewUpdated(
+            knowledgeId: $version->knowledge_id,
+            knowledgeTitle: $version->knowledge->title,
+            status: $status,
+            reviewNote: $validated['note'] ?? null,
+        ));
 
         return back()->with('status', 'Review knowledge berhasil disimpan.');
     }

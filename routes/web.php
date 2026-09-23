@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\MessageFeedbackController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,8 @@ Route::middleware(['auth', 'discord.member'])->group(function () {
     Route::resource('knowledge', KnowledgeController::class)->except(['create', 'edit']);
     Route::get('/leaderboard', LeaderboardController::class)->name('leaderboard');
     Route::post('/messages/{message}/feedback', [MessageFeedbackController::class, 'store'])->name('messages.feedback.store');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::resource('ai-credentials', AiCredentialController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::get('/admin/knowledge-reviews', [KnowledgeReviewController::class, 'index'])->name('admin.knowledge-reviews.index');
