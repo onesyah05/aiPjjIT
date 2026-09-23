@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\AI\GeminiService;
 use App\Services\CredentialPoolService;
+use App\Services\Knowledge\KnowledgeLinkExtractor;
 use App\Services\Knowledge\RetrievalService;
 use App\Services\PromptBuilderService;
 use Generator;
@@ -21,6 +22,7 @@ class ChatService
         private PromptBuilderService $promptBuilder,
         private CredentialPoolService $credentialPool,
         private GeminiService $gemini,
+        private KnowledgeLinkExtractor $knowledgeLinkExtractor,
     ) {}
 
     /** @return Generator<int, array{content?: string, sources?: array<int, array<string, mixed>>, message_id?: int}> */
@@ -62,6 +64,7 @@ class ChatService
         ]);
 
         $retrieved = $this->retrievalService->retrieve($conversation->user, $conversation, $content);
+        $sourceLinks = $this->sourceLinks($retrieved->all());
         $assistant = $conversation->messages()->create([
             'role' => 'assistant',
             'content' => '',
@@ -92,6 +95,9 @@ class ChatService
             $retrieved->map(fn (array $result): array => [
                 'content' => $result['content'],
                 'score' => $result['score'],
+                'links' => $this->knowledgeLinkExtractor->extract(
+                    $result['chunk']->version?->content ?? $result['content'],
+                ),
             ])->all(),
             $conversation->mode,
             $recentMessages,
@@ -141,6 +147,13 @@ class ChatService
 
                 if ($generatedContent === '') {
                     throw new RuntimeException('Provider mengembalikan respons kosong.');
+                }
+
+                $linkAppendix = $this->knowledgeLinkExtractor->appendixFor($generatedContent, $sourceLinks);
+
+                if ($linkAppendix !== '') {
+                    $generatedContent .= $linkAppendix;
+                    yield ['content' => $linkAppendix];
                 }
 
                 $this->credentialPool->recordSuccess($credential);
@@ -222,6 +235,9 @@ class ChatService
                 'title' => $chunk->version->knowledge->title,
                 'heading' => $chunk->heading_path,
                 'score' => $result['score'],
+                'links' => $this->knowledgeLinkExtractor->extract(
+                    $chunk->version?->content ?? $chunk->content,
+                ),
             ];
         }
 
@@ -237,6 +253,25 @@ class ChatService
             'title' => $source->chunk?->version?->knowledge?->title,
             'heading' => $source->chunk?->heading_path,
             'score' => $source->similarity_score,
+            'links' => $this->knowledgeLinkExtractor->extract(
+                $source->chunk?->version?->content ?? $source->chunk?->content ?? '',
+            ),
         ])->all();
+    }
+
+    /**
+     * @param  array<int, array{chunk: mixed, content: string, score: float}>  $retrieved
+     * @return array<int, array{url: string, label: string}>
+     */
+    private function sourceLinks(array $retrieved): array
+    {
+        return collect($retrieved)
+            ->flatMap(fn (array $result): array => $this->knowledgeLinkExtractor->extract(
+                $result['chunk']->version?->content ?? $result['content'],
+            ))
+            ->unique('url')
+            ->take(8)
+            ->values()
+            ->all();
     }
 }

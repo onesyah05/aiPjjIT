@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\AiCredential;
 use App\Models\Conversation;
+use App\Models\Knowledge;
+use App\Models\KnowledgeChunk;
+use App\Models\KnowledgeVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -87,5 +90,69 @@ class ConversationTest extends TestCase
             'role' => 'assistant',
             'content' => 'Algoritma adalah langkah terstruktur.',
         ]);
+    }
+
+    public function test_answer_includes_a_clickable_link_from_retrieved_knowledge(): void
+    {
+        $user = User::factory()->create();
+        $conversation = Conversation::query()->create(['user_id' => $user->id, 'mode' => 'general']);
+        $knowledge = Knowledge::query()->create([
+            'user_id' => $user->id,
+            'title' => 'Dokumentasi Laravel',
+            'description' => 'Referensi framework Laravel.',
+            'visibility' => 'community',
+            'status' => 'approved',
+        ]);
+        $version = KnowledgeVersion::query()->create([
+            'knowledge_id' => $knowledge->id,
+            'version' => 1,
+            'content' => 'Dokumentasi Laravel dapat dibaca melalui [panduan resmi](https://laravel.com/docs/13.x).',
+            'source_type' => 'manual',
+            'status' => 'approved',
+            'processing_status' => 'ready',
+        ]);
+        $knowledge->update(['active_version_id' => $version->id]);
+        KnowledgeChunk::query()->create([
+            'knowledge_version_id' => $version->id,
+            'chunk_index' => 0,
+            'heading_path' => 'Referensi',
+            'content' => $version->content,
+            'token_count' => 8,
+        ]);
+        AiCredential::query()->create([
+            'user_id' => $user->id,
+            'provider' => 'gemini',
+            'credential_type' => 'api_key',
+            'encrypted_secret' => 'secret-key-for-link-test-123',
+            'fingerprint' => hash('sha256', 'secret-key-for-link-test-123'),
+            'label' => 'Test tautan',
+            'masked_preview' => '••••t123',
+            'status' => 'active',
+            'community_enabled' => true,
+        ]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => 'Silakan pelajari dokumentasi resmi Laravel.']]]]],
+            ]),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('conversations.messages.store', $conversation), [
+            'message' => 'Di mana dokumentasi Laravel?',
+        ]);
+        $streamedContent = $response->streamedContent();
+
+        $response->assertOk();
+        $this->assertStringContainsString('### Tautan terkait', $streamedContent);
+        $this->assertStringContainsString('https:\/\/laravel.com\/docs\/13.x', $streamedContent);
+        $this->assertDatabaseHas('messages', [
+            'conversation_id' => $conversation->id,
+            'role' => 'assistant',
+            'content' => "Silakan pelajari dokumentasi resmi Laravel.\n\n### Tautan terkait\n- [panduan resmi](https://laravel.com/docs/13.x)",
+        ]);
+        Http::assertSent(fn ($request): bool => str_contains(
+            (string) data_get($request->data(), 'contents.0.parts.0.text'),
+            'https://laravel.com/docs/13.x',
+        ));
     }
 }
