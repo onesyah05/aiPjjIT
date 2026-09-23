@@ -72,7 +72,7 @@ class RetrievalService
         }
 
         $chunks = $this->accessibleChunks($user, $conversation)
-            ->whereIn('id', $scores->keys())
+            ->whereIn('knowledge_chunks.id', $scores->keys())
             ->get()
             ->sortBy(fn (KnowledgeChunk $chunk): int => (int) $scores->keys()->search($chunk->id));
 
@@ -116,20 +116,27 @@ class RetrievalService
     private function accessibleChunks(User $user, Conversation $conversation): Builder
     {
         return KnowledgeChunk::query()
+            ->select('knowledge_chunks.*')
+            ->join('knowledge_versions', 'knowledge_versions.id', '=', 'knowledge_chunks.knowledge_version_id')
+            ->join('knowledges', 'knowledges.id', '=', 'knowledge_versions.knowledge_id')
             ->with('version.knowledge.course')
-            ->whereHas('version.knowledge', function ($query) use ($user, $conversation): void {
-                $query->where(function ($visibility) use ($user, $conversation): void {
-                    $visibility->where(function ($own) use ($user): void {
-                        $own->where('user_id', $user->id)->where('visibility', 'private');
-                    })->orWhere(function ($shared) use ($conversation): void {
-                        $shared->where('status', 'approved')
-                            ->whereIn('visibility', ['course', 'community'])
-                            ->when($conversation->course_id, function ($course) use ($conversation): void {
-                                $course->where(function ($matching) use ($conversation): void {
-                                    $matching->whereNull('course_id')->orWhere('course_id', $conversation->course_id);
-                                });
+            ->whereNull('knowledges.deleted_at')
+            ->whereColumn('knowledges.active_version_id', 'knowledge_versions.id')
+            ->where('knowledge_versions.status', 'approved')
+            ->where('knowledge_versions.processing_status', 'ready')
+            ->where(function ($visibility) use ($user, $conversation): void {
+                $visibility->where(function ($own) use ($user): void {
+                    $own->where('knowledges.user_id', $user->id)
+                        ->where('knowledges.visibility', 'private');
+                })->orWhere(function ($shared) use ($conversation): void {
+                    $shared->where('knowledges.status', 'approved')
+                        ->whereIn('knowledges.visibility', ['course', 'community'])
+                        ->when($conversation->course_id, function ($course) use ($conversation): void {
+                            $course->where(function ($matching) use ($conversation): void {
+                                $matching->whereNull('knowledges.course_id')
+                                    ->orWhere('knowledges.course_id', $conversation->course_id);
                             });
-                    });
+                        });
                 });
             });
     }

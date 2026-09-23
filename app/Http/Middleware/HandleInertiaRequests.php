@@ -35,6 +35,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'notifications' => fn (): array => $this->notificationsFor($request),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],
@@ -42,6 +43,31 @@ class HandleInertiaRequests extends Middleware
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
+        ];
+    }
+
+    /** @return array{unread_count: int, items: array<int, array<string, mixed>>} */
+    private function notificationsFor(Request $request): array
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return ['unread_count' => 0, 'items' => []];
+        }
+
+        return [
+            'unread_count' => $user->unreadNotifications()->count(),
+            'items' => $user->notifications()
+                ->latest()
+                ->limit(12)
+                ->get()
+                ->map(fn ($notification): array => [
+                    'id' => $notification->id,
+                    'data' => $notification->data,
+                    'read_at' => $notification->read_at?->toIso8601String(),
+                    'created_at' => $notification->created_at?->toIso8601String(),
+                ])
+                ->all(),
         ];
     }
 }

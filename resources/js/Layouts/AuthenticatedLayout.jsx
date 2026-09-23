@@ -1,4 +1,5 @@
 import BrandMark from '@/Components/BrandMark';
+import NotificationCenter, { NotificationTrigger } from '@/Components/NotificationCenter';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Link, usePage } from '@inertiajs/react';
@@ -42,7 +43,7 @@ function UserAvatar({ user, size = 'md' }) {
     );
 }
 
-function SidebarContent({ user, onNavigate = () => {} }) {
+function SidebarContent({ user, notifications, onOpenNotifications, onNavigate = () => {} }) {
     const workspaceNavigation = [
         { label: 'Beranda', href: route('dashboard'), active: route().current('dashboard'), icon: Home },
         { label: 'Percakapan', href: route('conversations.index'), active: route().current('conversations.*'), icon: MessageCircle },
@@ -70,10 +71,11 @@ function SidebarContent({ user, onNavigate = () => {} }) {
 
     return (
         <div className="flex h-full flex-col bg-brand-950 text-white">
-            <div className="flex h-20 shrink-0 items-center border-b border-white/10 px-5">
+            <div className="flex h-20 shrink-0 items-center justify-between gap-3 border-b border-white/10 px-5">
                 <Link href={route('dashboard')} onClick={onNavigate} aria-label="PJJ AI — Beranda">
                     <BrandMark inverse />
                 </Link>
+                <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-5">
@@ -107,8 +109,11 @@ function SidebarContent({ user, onNavigate = () => {} }) {
 }
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const page = usePage();
+    const user = page.props.auth.user;
+    const notifications = page.props.notifications || { unread_count: 0, items: [] };
     const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-paper text-ink">
@@ -117,7 +122,7 @@ export default function AuthenticatedLayout({ header, children }) {
             </a>
 
             <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 lg:block xl:w-72">
-                <SidebarContent user={user} />
+                <SidebarContent user={user} notifications={notifications} onOpenNotifications={() => setNotificationsOpen(true)} />
             </aside>
 
             <Dialog open={mobileNavigationOpen} onClose={setMobileNavigationOpen} className="relative z-50 lg:hidden">
@@ -125,7 +130,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 <div className="fixed inset-0 flex">
                     <DialogPanel transition className="relative w-full max-w-72 transition duration-200 ease-out data-[closed]:-translate-x-full">
                         <DialogTitle className="sr-only">Navigasi aplikasi</DialogTitle>
-                        <SidebarContent user={user} onNavigate={() => setMobileNavigationOpen(false)} />
+                        <SidebarContent user={user} notifications={notifications} onOpenNotifications={() => { setMobileNavigationOpen(false); setNotificationsOpen(true); }} onNavigate={() => setMobileNavigationOpen(false)} />
                         <button type="button" onClick={() => setMobileNavigationOpen(false)} className="absolute right-3 top-5 rounded-lg bg-white/10 p-2 text-white hover:bg-white/20" aria-label="Tutup navigasi">
                             <X size={24} strokeWidth={2} aria-hidden="true" />
                         </button>
@@ -142,6 +147,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <p className="text-xs text-stone-500">{roleLabels[user.role] || user.role}</p>
                         </div>
                         <UserAvatar user={user} size="sm" />
+                        <NotificationTrigger unreadCount={notifications.unread_count} onClick={() => setNotificationsOpen(true)} />
                         <button type="button" onClick={() => setMobileNavigationOpen(true)} className="grid h-10 w-10 place-items-center rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-50" aria-label="Buka navigasi">
                             <Menu size={20} strokeWidth={2} aria-hidden="true" />
                         </button>
@@ -156,6 +162,8 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <main id="main-content" className="min-h-screen">{children}</main>
             </div>
+
+            <NotificationCenter open={notificationsOpen} onClose={() => setNotificationsOpen(false)} notifications={notifications} />
         </div>
     );
 }

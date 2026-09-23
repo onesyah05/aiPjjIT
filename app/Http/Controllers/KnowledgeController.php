@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreKnowledgeRequest;
 use App\Http\Requests\UpdateKnowledgeRequest;
+use App\Jobs\DeleteKnowledgeVectors;
 use App\Jobs\ProcessKnowledgeEmbedding;
 use App\Models\Course;
 use App\Models\Knowledge;
@@ -179,8 +180,10 @@ class KnowledgeController extends Controller
     public function destroy(Request $request, Knowledge $knowledge): RedirectResponse
     {
         $this->authorize('delete', $knowledge);
+        $knowledgeId = $knowledge->id;
         $this->audit->record($request->user(), 'knowledge.deleted', $knowledge, request: $request);
         $knowledge->delete();
+        DeleteKnowledgeVectors::dispatch($knowledgeId);
 
         return redirect()->route('knowledge.index');
     }

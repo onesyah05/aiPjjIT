@@ -184,7 +184,11 @@ class ChatService
                 if ($status === 429) {
                     $this->credentialPool->markRateLimitHit($credential);
                 } elseif (in_array($status, [401, 403], true)) {
-                    $credential->update(['status' => 'invalid']);
+                    $this->credentialPool->markInvalid(
+                        $credential,
+                        $errorCode,
+                        'Credential ditolak oleh Gemini. Periksa key dan izin project sebelum mengaktifkannya kembali.',
+                    );
                 }
             } catch (Throwable $exception) {
                 $this->credentialPool->recordFailure($credential, 'provider_error');

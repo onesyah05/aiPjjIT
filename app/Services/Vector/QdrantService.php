@@ -38,6 +38,30 @@ class QdrantService
         ])->throw();
     }
 
+    public function deleteKnowledge(int $knowledgeId): void
+    {
+        if (! $this->enabled()) {
+            return;
+        }
+
+        $collection = $this->client()->get($this->collectionPath());
+
+        if ($collection->notFound()) {
+            return;
+        }
+
+        $collection->throw();
+
+        $this->client()->post($this->collectionPath().'/points/delete?wait=true', [
+            'filter' => [
+                'must' => [[
+                    'key' => 'knowledge_id',
+                    'match' => ['value' => $knowledgeId],
+                ]],
+            ],
+        ])->throw();
+    }
+
     /**
      * @param  array<int, float>  $vector
      * @return array<int, array{id: string, score: float, payload: array<string, mixed>}>

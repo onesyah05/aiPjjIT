@@ -10,6 +10,7 @@ use App\Services\Vector\QdrantService;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -88,6 +89,8 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
         ]);
 
         try {
+            $qdrant->deleteKnowledge($this->knowledgeVersion->knowledge_id);
+
             foreach ($knowledgeChunks as $chunk) {
                 $credentialPool->recordAttempt($credential);
                 $vector = $embedding->embed($credential->encrypted_secret, $chunk->content);
@@ -97,6 +100,15 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             }
         } catch (Throwable $exception) {
             $credentialPool->recordFailure($credential, 'embedding_or_vector_error');
+
+            if ($exception instanceof RequestException && in_array($exception->response->status(), [401, 403], true)) {
+                $credentialPool->markInvalid(
+                    $credential,
+                    'embedding_auth_failed',
+                    'Credential ditolak saat memproses embedding knowledge. Periksa key dan izin project Anda.',
+                );
+            }
+
             $log->update([
                 'status' => 'failed',
                 'error_code' => 'embedding_or_vector_error',
