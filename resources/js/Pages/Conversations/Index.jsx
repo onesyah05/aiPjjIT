@@ -3,7 +3,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import Pagination from '@/Components/Pagination';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { MessageCircle, Pencil, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -14,11 +14,13 @@ const formatDate = (value) => new Intl.DateTimeFormat('id-ID', {
 
 export default function Index({ conversations, filters }) {
     const [query, setQuery] = useState(filters.q || '');
+    const newConversation = useForm({ course_id: '', mode: 'general', title: '' });
+    const startConversation = () => newConversation.post(route('conversations.store'));
     const rename = (conversation) => { const title = window.prompt('Judul percakapan', conversation.title || ''); if (title?.trim()) router.patch(route('conversations.update', conversation.id), { title: title.trim() }, { preserveScroll: true }); };
     const remove = (conversation) => { if (window.confirm('Hapus percakapan ini?')) router.delete(route('conversations.destroy', conversation.id), { preserveScroll: true }); };
     return (
         <AuthenticatedLayout
-            header={<PageHeader eyebrow="Ruang belajar" title="Percakapan" description="Temukan kembali sesi lama, ubah judul, atau mulai diskusi baru." icon={MessageCircle} actions={<Link href={route('dashboard')} className="rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-900">Mulai percakapan</Link>} />}
+            header={<PageHeader eyebrow="Ruang belajar" title="Percakapan" description="Temukan kembali sesi lama, ubah judul, atau mulai diskusi baru." icon={MessageCircle} actions={<button type="button" onClick={startConversation} disabled={newConversation.processing} className="rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-900 disabled:cursor-wait disabled:opacity-60">{newConversation.processing ? 'Menyiapkan…' : 'Mulai percakapan'}</button>} />}
         >
             <Head title="Percakapan" />
 
@@ -56,7 +58,7 @@ export default function Index({ conversations, filters }) {
                     <EmptyState
                         title="Belum ada percakapan"
                         description="Mulai dengan satu pertanyaan. Riwayat belajarmu akan tersimpan di sini."
-                        action={<Link href={route('dashboard')} className="font-semibold text-brand-700 hover:text-brand-900">Ajukan pertanyaan pertama</Link>}
+                        action={<button type="button" onClick={startConversation} disabled={newConversation.processing} className="font-semibold text-brand-700 hover:text-brand-900 disabled:cursor-wait disabled:opacity-60">{newConversation.processing ? 'Menyiapkan percakapan…' : 'Ajukan pertanyaan pertama'}</button>}
                     />
                 )}
                 <Pagination data={conversations} label="percakapan" />
