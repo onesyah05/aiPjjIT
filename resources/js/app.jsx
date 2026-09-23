@@ -7,6 +7,11 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PJJ AI';
 
+window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    window.location.reload();
+});
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>

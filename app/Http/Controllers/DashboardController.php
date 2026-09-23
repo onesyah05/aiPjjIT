@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Services\LeaderboardService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, LeaderboardService $leaderboard): Response
     {
         $user = $request->user();
 
@@ -30,6 +31,7 @@ class DashboardController extends Controller
                 'active_credentials' => $user->aiCredentials()->where('status', 'active')->count(),
                 'conversation_count' => $user->conversations()->count(),
             ],
+            'leaders' => $leaderboard->rankings(5),
         ]);
     }
 }

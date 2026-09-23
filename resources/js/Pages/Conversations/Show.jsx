@@ -7,8 +7,38 @@ import { useEffect, useRef, useState } from 'react';
 
 const csrfToken = () => decodeURIComponent(document.cookie.split('; ').find((row) => row.startsWith('XSRF-TOKEN='))?.split('=')[1] || '');
 
+function SourceCard({ source, index }) {
+    const knowledgeId = source.knowledge_id ?? source.chunk?.version?.knowledge?.id;
+    const title = source.title ?? source.chunk?.version?.knowledge?.title ?? 'Knowledge tidak tersedia';
+    const heading = source.heading ?? source.chunk?.heading_path;
+    const content = (
+        <>
+            <span className="flex items-start justify-between gap-3">
+                <span className="text-sm font-semibold text-ink group-hover/source:text-brand-800">{title}</span>
+                {knowledgeId && <ExternalLink size={14} className="shrink-0 text-stone-400" aria-hidden="true" />}
+            </span>
+            {heading && <span className="mt-1 block text-xs leading-5 text-stone-500">Bagian: {heading}</span>}
+            {!knowledgeId && <span className="mt-1 block text-xs leading-5 text-stone-500">Sumber ini sudah tidak tersedia di library.</span>}
+        </>
+    );
+
+    return (
+        <li key={source.id || `${title}-${index}`}>
+            {knowledgeId ? (
+                <Link href={route('knowledge.show', knowledgeId)} className="group/source block rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-3 hover:border-brand-300 hover:bg-brand-50">
+                    {content}
+                </Link>
+            ) : (
+                <div className="group/source block rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-3">
+                    {content}
+                </div>
+            )}
+        </li>
+    );
+}
+
 export default function Show({ conversation, courses }) {
-    const [messages, setMessages] = useState(conversation.messages);
+    const [messages, setMessages] = useState(Array.isArray(conversation.messages) ? conversation.messages : []);
     const [input, setInput] = useState('');
     const [streaming, setStreaming] = useState(false);
     const [error, setError] = useState('');
@@ -146,7 +176,7 @@ export default function Show({ conversation, courses }) {
                                     <BookOpenText size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
                                     <select id="conversation-course" defaultValue={conversation.course_id || ''} onChange={(event) => updateSetting('course_id', event.target.value || null)} className="w-full appearance-none rounded-lg border-stone-300 bg-white py-2 pl-9 pr-9 text-sm font-semibold text-stone-700 shadow-sm focus:border-brand-600 focus:ring-brand-600">
                                         <option value="">Semua mata kuliah</option>
-                                        {courses.map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}
+                                        {(courses ?? []).map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}
                                     </select>
                                     <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
                                 </div>
@@ -213,14 +243,7 @@ export default function Show({ conversation, courses }) {
                                                         Sumber yang digunakan
                                                     </div>
                                                     <ul className="grid gap-2 sm:grid-cols-2">
-                                                        {message.sources.map((source, index) => (
-                                                            <li key={source.id || `${source.title}-${index}`}>
-                                                                <Link href={route('knowledge.show', source.knowledge_id || source.chunk?.version?.knowledge?.id)} className="group/source block rounded-lg border border-stone-200 bg-stone-50 px-3.5 py-3 hover:border-brand-300 hover:bg-brand-50">
-                                                                    <span className="flex items-start justify-between gap-3"><span className="text-sm font-semibold text-ink group-hover/source:text-brand-800">{source.title || source.chunk?.version?.knowledge?.title || 'Knowledge'}</span><ExternalLink size={14} className="shrink-0 text-stone-400" /></span>
-                                                                    {(source.heading || source.chunk?.heading_path) && <span className="mt-1 block text-xs leading-5 text-stone-500">Bagian: {source.heading || source.chunk?.heading_path}</span>}
-                                                                </Link>
-                                                            </li>
-                                                        ))}
+                                                        {message.sources.map((source, index) => <SourceCard key={source.id || index} source={source} index={index} />)}
                                                     </ul>
                                                 </section>
                                             )}
