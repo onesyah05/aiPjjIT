@@ -30,8 +30,8 @@ class CredentialPoolService
                 $query->whereNull('daily_request_limit')
                     ->orWhereRaw('daily_request_limit > COALESCE((SELECT request_count FROM ai_credential_usage_daily WHERE credential_id = ai_credentials.id AND date = ?), 0)', [today()->toDateString()]);
             })
-            ->orderByRaw('(CAST(success_count AS SIGNED) - CAST(failure_count AS SIGNED)) DESC')
             ->orderBy('last_used_at')
+            ->orderByRaw('(CAST(success_count AS SIGNED) - CAST(failure_count AS SIGNED)) DESC')
             ->limit($limit)
             ->get();
     }
