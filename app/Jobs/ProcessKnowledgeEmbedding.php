@@ -72,6 +72,7 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        // Start with one credential
         $credential = $credentialPool->getAvailableCredentials(1)->first();
 
         if ($credential === null) {
@@ -93,35 +94,58 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             $qdrant->deleteKnowledge($this->knowledgeVersion->knowledge_id);
 
             foreach ($knowledgeChunks as $chunk) {
-                $credentialPool->recordAttempt($credential);
-                $vector = $embedding->embed($credential->encrypted_secret, $chunk->content);
-                $chunk->loadMissing('version.knowledge');
-                $qdrant->upsert($chunk, $vector);
-                $credentialPool->recordSuccess($credential);
-            }
-        } catch (Throwable $exception) {
-            $credentialPool->recordFailure($credential, 'embedding_or_vector_error');
+                $retryCount = 0;
+                $embedded = false;
 
-            if ($exception instanceof RequestException) {
-                $status = $exception->response->status();
+                while (! $embedded && $retryCount < 5) {
+                    if ($credential === null) {
+                        $credential = $credentialPool->getAvailableCredentials(1)->first();
+                        if ($credential === null) {
+                            // If absolutely no credentials, wait a bit
+                            sleep(10);
+                            $retryCount++;
 
-                if (in_array($status, [401, 403], true)) {
-                    $credentialPool->markInvalid(
-                        $credential,
-                        'embedding_auth_failed',
-                        'Credential ditolak saat memproses embedding knowledge. Periksa key dan izin project Anda.',
-                    );
-                } elseif (in_array($status, [429, 503], true)) {
-                    // Put this credential on cooldown for 30 seconds
-                    Cache::put("credential_cooldown_{$credential->id}", true, now()->addSeconds(30));
+                            continue;
+                        }
+                    }
 
-                    // Delay the retry of this job by 15 seconds
-                    $this->release(15);
+                    try {
+                        $credentialPool->recordAttempt($credential);
+                        $vector = $embedding->embed($credential->encrypted_secret, $chunk->content);
+                        $chunk->loadMissing('version.knowledge');
+                        $qdrant->upsert($chunk, $vector);
+                        $credentialPool->recordSuccess($credential);
+                        $embedded = true;
+                    } catch (Throwable $exception) {
+                        $credentialPool->recordFailure($credential, 'embedding_or_vector_error');
 
-                    return;
+                        if ($exception instanceof RequestException) {
+                            $status = $exception->response->status();
+
+                            if (in_array($status, [401, 403], true)) {
+                                $credentialPool->markInvalid(
+                                    $credential,
+                                    'embedding_auth_failed',
+                                    'Credential ditolak saat memproses embedding knowledge. Periksa key dan izin project Anda.',
+                                );
+                            } elseif (in_array($status, [429, 503], true)) {
+                                // Put this credential on cooldown for 30 seconds
+                                Cache::put("credential_cooldown_{$credential->id}", true, now()->addSeconds(30));
+                            }
+                        }
+
+                        // Discard current credential, try next one
+                        $credential = null;
+                        $retryCount++;
+                        sleep(2); // Short sleep before trying next credential
+                    }
+                }
+
+                if (! $embedded) {
+                    throw new \RuntimeException('Gagal memproses embedding setelah 5 kali percobaan (Mungkin limit API).');
                 }
             }
-
+        } catch (Throwable $exception) {
             $log->update([
                 'status' => 'failed',
                 'error_code' => 'embedding_or_vector_error',
