@@ -1,9 +1,14 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useState } from 'react';
+import { X, Download } from 'lucide-react';
 
 export default function MarkdownContent({ content }) {
+    const [selectedImage, setSelectedImage] = useState(null);
+
     return (
-        <ReactMarkdown
+        <>
+            <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
                 h1: ({ children }) => <h1 className="mb-3 mt-6 font-display text-2xl font-bold leading-tight text-ink first:mt-0">{children}</h1>,
@@ -39,9 +44,47 @@ export default function MarkdownContent({ content }) {
                 th: ({ children }) => <th className="px-4 py-3 font-bold">{children}</th>,
                 tbody: ({ children }) => <tbody className="divide-y divide-stone-100 bg-white">{children}</tbody>,
                 td: ({ children }) => <td className="px-4 py-3 align-top leading-6 text-stone-700">{children}</td>,
+                img: ({ src, alt }) => (
+                    <img 
+                        src={src} 
+                        alt={alt} 
+                        onClick={() => setSelectedImage({ src, alt })}
+                        className="inline-block h-28 w-28 rounded-lg border border-stone-200 object-cover m-1 cursor-pointer hover:opacity-80 transition-opacity shadow-sm" 
+                    />
+                ),
             }}
         >
             {content}
         </ReactMarkdown>
+
+        {selectedImage && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-stone-900/80 p-4 backdrop-blur-sm" onClick={() => setSelectedImage(null)}>
+                <div className="relative max-h-full max-w-4xl" onClick={e => e.stopPropagation()}>
+                    <div className="absolute -right-12 top-0 flex flex-col gap-2 max-sm:right-0 max-sm:-top-14 max-sm:flex-row">
+                        <button 
+                            onClick={() => setSelectedImage(null)} 
+                            className="rounded-full bg-white/20 p-2 text-white hover:bg-white/30 transition-colors backdrop-blur"
+                        >
+                            <X size={20} />
+                        </button>
+                        <a 
+                            href={selectedImage.src} 
+                            download
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-full bg-brand-600 p-2 text-white hover:bg-brand-700 transition-colors shadow-lg"
+                        >
+                            <Download size={20} />
+                        </a>
+                    </div>
+                    <img 
+                        src={selectedImage.src} 
+                        alt={selectedImage.alt} 
+                        className="max-h-[85vh] rounded-xl shadow-2xl object-contain bg-white" 
+                    />
+                </div>
+            </div>
+        )}
+        </>
     );
 }
