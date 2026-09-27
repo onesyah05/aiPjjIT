@@ -29,7 +29,7 @@ class PromptBuilderService
 
         $knowledgeOnlyInstruction = $mode === 'knowledge_only'
             ? 'Jawab hanya dari SUMBER. Jika tidak cukup, jawab persis: "Informasi tersebut belum ditemukan pada knowledge yang tersedia."'
-            : 'Gunakan SUMBER bila relevan. Jelaskan dengan jujur jika informasi tidak pasti.';
+            : 'Anda HANYA boleh menjawab pertanyaan terkait perkuliahan, materi kampus, atau ruang lingkup PJJ Informatika. Jika pertanyaan di luar konteks tersebut, tolak dengan sopan. Selalu utamakan menggunakan informasi dari SUMBER yang ada.';
 
         return <<<PROMPT
 Anda adalah tutor belajar PJJ Informatika. Jawab dalam Bahasa Indonesia yang jelas, akurat, dan ramah.
