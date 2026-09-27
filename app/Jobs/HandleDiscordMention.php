@@ -94,9 +94,26 @@ class HandleDiscordMention implements ShouldQueue
             $latency = (int) round((hrtime(true) - $startedAt) / 1_000_000);
             $record->update(['status' => 'completed', 'answer' => $answer, 'latency_ms' => $latency]);
 
-            // Prepend mention so user gets notified
-            $reply = "<@{$this->userId}>\n\n".$this->truncateForDiscord($answer);
-            $this->replyToDiscord($reply);
+            // 1. Extract images: ![alt](url)
+            preg_match_all('/!\[([^\]]*)\]\(([^)]+)\)/', $answer, $imageMatches, PREG_SET_ORDER);
+
+            // 2. Remove images from main text
+            $textWithoutImages = trim(preg_replace('/!\[([^\]]*)\]\(([^)]+)\)/', '', $answer));
+
+            // 3. Prepend mention
+            $fullReply = "<@{$this->userId}>\n\n".$textWithoutImages;
+
+            // 4. Split message if it's too long (> 1950 chars)
+            $textChunks = mb_str_split($fullReply, 1950);
+            foreach ($textChunks as $chunk) {
+                $this->replyToDiscord($chunk);
+            }
+
+            // 5. Send images separately
+            foreach ($imageMatches as $match) {
+                $imageUrl = $match[2];
+                $this->replyToDiscord($imageUrl);
+            }
 
         } catch (Throwable $e) {
             Log::error('HandleDiscordMention failed', ['error' => $e->getMessage(), 'channel' => $this->channelId]);
@@ -203,14 +220,5 @@ class HandleDiscordMention implements ShouldQueue
                 'content' => $content,
                 'message_reference' => ['message_id' => $this->messageId],
             ]);
-    }
-
-    private function truncateForDiscord(string $text, int $limit = 1950): string
-    {
-        if (mb_strlen($text) <= $limit) {
-            return $text;
-        }
-
-        return mb_substr($text, 0, $limit).'…\n\n*(jawaban terpotong karena batas karakter Discord)*';
     }
 }
