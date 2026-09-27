@@ -73,11 +73,20 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
 
     return (
         <div className="flex h-full flex-col bg-brand-950 text-white transition-all duration-300">
-            <div className={`flex h-20 shrink-0 items-center justify-between gap-3 border-b border-white/10 ${collapsed ? 'flex-col justify-center gap-2 py-4' : 'px-5'}`}>
-                <Link href={route('dashboard')} onClick={onNavigate} aria-label="PJJ AI — Beranda">
-                    <BrandMark inverse compact={collapsed} />
-                </Link>
-                {!collapsed && <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />}
+            <div className={`flex h-20 shrink-0 items-center justify-between gap-2 border-b border-white/10 ${collapsed ? 'flex-col justify-center py-4' : 'px-4'}`}>
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <Link href={route('dashboard')} onClick={onNavigate} aria-label="PJJ AI — Beranda" className="min-w-0">
+                        <BrandMark inverse compact={collapsed} />
+                    </Link>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                    {!collapsed && <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />}
+                    {onToggleCollapse && (
+                        <button type="button" onClick={onToggleCollapse} className={`hidden lg:grid h-8 w-8 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white`} aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
+                            {collapsed ? <PanelLeftOpen size={18} strokeWidth={2} aria-hidden="true" /> : <PanelLeftClose size={18} strokeWidth={2} aria-hidden="true" />}
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-5">
@@ -95,11 +104,6 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
             </div>
 
             <div className={`shrink-0 border-t border-white/10 p-3 flex ${collapsed ? 'flex-col items-center gap-3' : 'items-center gap-2'}`}>
-                {onToggleCollapse && (
-                    <button type="button" onClick={onToggleCollapse} className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white ${!collapsed && 'hidden lg:grid'}`} aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
-                        {collapsed ? <PanelLeftOpen size={20} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose size={20} strokeWidth={1.8} aria-hidden="true" />}
-                    </button>
-                )}
                 <div className={`flex items-center gap-3 rounded-lg bg-white/[0.06] p-3 flex-1 w-full ${collapsed ? 'justify-center p-2' : ''}`}>
                     <UserAvatar user={user} size={collapsed ? 'sm' : 'md'} />
                     {!collapsed && (

@@ -1,0 +1,4 @@
+cd /www/wwwroot/pjjaiit.nalaros.my.id
+php artisan tinker --execute "App\Models\Knowledge::where('user_id', App\Models\User::where('email', 'discord-bot@pjj.ai')->value('id'))->delete();"
+git pull origin main
+php artisan discord:sync-knowledge

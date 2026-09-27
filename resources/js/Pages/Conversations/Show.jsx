@@ -159,46 +159,58 @@ export default function Show({ conversation, courses }) {
         <AuthenticatedLayout>
             <Head title={conversation.title || 'Percakapan'} />
 
-            <div className="flex h-[calc(100dvh-4rem)] flex-col overflow-hidden lg:h-dvh">
-                <header className="shrink-0 border-b border-stone-200 bg-paper/95 backdrop-blur">
-                    <div className="mx-auto max-w-5xl px-4 py-4 sm:px-6 lg:px-8">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-700">
-                                    <Sparkles size={14} aria-hidden="true" />
-                                    Ruang belajar
+            <div className="flex h-[calc(100dvh-4rem)] flex-col overflow-hidden lg:h-dvh relative">
+                <div className="absolute top-4 left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
+                    <div className="pointer-events-auto group relative flex flex-col items-center overflow-hidden rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm hover:shadow-xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:w-[600px] hover:rounded-3xl w-[240px] h-[44px] hover:h-[200px] max-w-full">
+                        
+                        {/* Compact State */}
+                        <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-100 transition-opacity duration-300 group-hover:opacity-0 px-4">
+                            <img src="/images/sibermu-logo.png" className="w-6 h-6 rounded-full ring-1 ring-stone-100 object-cover" alt="Sibermu" />
+                            <span className="text-sm font-semibold truncate text-ink">{conversation.title || 'Percakapan baru'}</span>
+                        </div>
+                        
+                        {/* Expanded State */}
+                        <div className="absolute inset-0 p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex flex-col pointer-events-none group-hover:pointer-events-auto w-full">
+                            <div className="flex flex-col h-full justify-between">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-brand-700">
+                                        <Sparkles size={14} aria-hidden="true" />
+                                        Ruang belajar
+                                    </div>
+                                    <h1 className="truncate font-display text-lg font-bold leading-tight text-ink max-w-[200px] sm:max-w-[300px]">{conversation.title || 'Percakapan baru'}</h1>
                                 </div>
-                                <h1 className="mt-1 truncate font-display text-xl font-bold leading-tight text-ink sm:text-2xl">{conversation.title || 'Percakapan baru'}</h1>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-                                <div className="relative min-w-0 sm:w-52">
-                                    <label className="sr-only" htmlFor="conversation-course">Mata kuliah</label>
-                                    <BookOpenText size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
-                                    <select id="conversation-course" defaultValue={conversation.course_id || ''} onChange={(event) => updateSetting('course_id', event.target.value || null)} className="w-full appearance-none rounded-lg border-stone-300 bg-white py-2 pl-9 pr-9 text-sm font-semibold text-stone-700 shadow-sm focus:border-brand-600 focus:ring-brand-600">
-                                        <option value="">Semua mata kuliah</option>
-                                        {(courses ?? []).map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}
-                                    </select>
-                                    <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
+                                
+                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                    <div className="relative min-w-0">
+                                        <label className="sr-only" htmlFor="conversation-course">Mata kuliah</label>
+                                        <BookOpenText size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
+                                        <select id="conversation-course" defaultValue={conversation.course_id || ''} onChange={(event) => updateSetting('course_id', event.target.value || null)} className="w-full appearance-none rounded-lg border-stone-300 bg-white py-2 pl-9 pr-9 text-xs sm:text-sm font-semibold text-stone-700 shadow-sm focus:border-brand-600 focus:ring-brand-600">
+                                            <option value="">Semua mata kuliah</option>
+                                            {(courses ?? []).map((course) => <option key={course.id} value={course.id}>{course.code}</option>)}
+                                        </select>
+                                        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
+                                    </div>
+                                    <div className="relative min-w-0">
+                                        <label className="sr-only" htmlFor="conversation-mode">Mode jawaban</label>
+                                        <select id="conversation-mode" defaultValue={conversation.mode} onChange={(event) => updateSetting('mode', event.target.value)} className="w-full appearance-none rounded-lg border-stone-300 bg-white py-2 pl-3 pr-9 text-xs sm:text-sm font-semibold text-stone-700 shadow-sm focus:border-brand-600 focus:ring-brand-600">
+                                            <option value="general">Jawaban umum</option>
+                                            <option value="knowledge_only">Hanya knowledge</option>
+                                        </select>
+                                        <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
+                                    </div>
                                 </div>
-                                <div className="relative min-w-0 sm:w-48">
-                                    <label className="sr-only" htmlFor="conversation-mode">Mode jawaban</label>
-                                    <select id="conversation-mode" defaultValue={conversation.mode} onChange={(event) => updateSetting('mode', event.target.value)} className="w-full appearance-none rounded-lg border-stone-300 bg-white py-2 pl-3 pr-9 text-sm font-semibold text-stone-700 shadow-sm focus:border-brand-600 focus:ring-brand-600">
-                                        <option value="general">Jawaban umum</option>
-                                        <option value="knowledge_only">Hanya knowledge</option>
-                                    </select>
-                                    <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-stone-500" aria-hidden="true" />
-                                </div>
+                                
+                                <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-stone-500">
+                                    <Check size={12} className="mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
+                                    Jawaban disusun dari konteks yang tersedia. Tetap periksa informasi penting pada sumber asli.
+                                </p>
                             </div>
                         </div>
-                        <p className="mt-3 flex items-start gap-1.5 text-xs leading-5 text-stone-500">
-                            <Check size={13} className="mt-0.5 shrink-0 text-brand-600" aria-hidden="true" />
-                            Jawaban disusun dari konteks yang tersedia. Tetap periksa informasi penting pada sumber asli.
-                        </p>
                     </div>
-                </header>
+                </div>
 
                 <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain" aria-live="polite" aria-busy={streaming}>
-                    <div className="mx-auto w-full max-w-4xl space-y-7 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+                    <div className="mx-auto w-full max-w-4xl space-y-7 px-4 pb-8 pt-16 sm:px-6 sm:pb-10 sm:pt-20 lg:px-8">
                         {messages.length === 0 && <EmptyState title="Mulai sesi belajar" description="Tanyakan sebuah konsep, minta contoh, atau bahas materi dari library knowledge." />}
 
                         {messages.map((message, messageIndex) => (
