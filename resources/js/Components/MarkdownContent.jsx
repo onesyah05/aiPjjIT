@@ -1,7 +1,30 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Download } from 'lucide-react';
+
+const sortListChildren = (children) => {
+    const childArray = React.Children.toArray(children);
+    const images = [];
+    const links = [];
+    const others = [];
+    
+    childArray.forEach((child) => {
+        const nodeStr = JSON.stringify(child?.props?.node || {});
+        const isAttachment = nodeStr.includes('Attachment') || nodeStr.includes('Embed Thumbnail') || nodeStr.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?/i);
+        const isLink = nodeStr.includes('"type":"link"');
+        
+        if (isAttachment) {
+            images.push(child);
+        } else if (isLink) {
+            links.push(child);
+        } else {
+            others.push(child);
+        }
+    });
+    
+    return [...images, ...links, ...others];
+};
 
 export default function MarkdownContent({ content }) {
     const [selectedImage, setSelectedImage] = useState(null);
@@ -17,8 +40,8 @@ export default function MarkdownContent({ content }) {
                 p: ({ children }) => <p className="my-3 leading-7 text-stone-700 first:mt-0 last:mb-0">{children}</p>,
                 strong: ({ children }) => <strong className="font-bold text-ink">{children}</strong>,
                 em: ({ children }) => <em className="text-stone-700">{children}</em>,
-                ul: ({ children }) => <ul className="my-4 list-disc space-y-2 pl-6 text-stone-700 marker:text-brand-500">{children}</ul>,
-                ol: ({ children }) => <ol className="my-4 list-decimal space-y-3 pl-6 text-stone-700 marker:font-bold marker:text-brand-700">{children}</ol>,
+                ul: ({ children }) => <ul className="my-4 list-disc space-y-2 pl-6 text-stone-700 marker:text-brand-500">{sortListChildren(children)}</ul>,
+                ol: ({ children }) => <ol className="my-4 list-decimal space-y-3 pl-6 text-stone-700 marker:font-bold marker:text-brand-700">{sortListChildren(children)}</ol>,
                 li: ({ children }) => <li className="pl-1 leading-7 [&:has(.attachment-preview)]:inline-block [&:has(.attachment-preview)]:list-none [&:has(.attachment-preview)]:!p-0 [&:has(.attachment-preview)]:!m-0 [&:has(.attachment-preview)]:!mr-2 [&:has(.attachment-preview)]:!mb-2">{children}</li>,
                 blockquote: ({ children }) => <blockquote className="my-5 border-l-4 border-brand-300 bg-brand-50 px-4 py-2 text-stone-700">{children}</blockquote>,
                 hr: () => <hr className="my-6 border-stone-200" />,
