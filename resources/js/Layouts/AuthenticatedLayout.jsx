@@ -18,10 +18,12 @@ import {
     ShieldCheck,
     UserRound,
     Users,
+    PanelLeftClose,
+    PanelLeftOpen,
     Trophy,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const roleLabels = {
     admin: 'Administrator',
@@ -43,7 +45,7 @@ function UserAvatar({ user, size = 'md' }) {
     );
 }
 
-function SidebarContent({ user, notifications, onOpenNotifications, onNavigate = () => {} }) {
+function SidebarContent({ user, notifications, onOpenNotifications, onNavigate = () => {}, collapsed = false, onToggleCollapse }) {
     const workspaceNavigation = [
         { label: 'Beranda', href: route('dashboard'), active: route().current('dashboard'), icon: Home },
         { label: 'Percakapan', href: route('conversations.index'), active: route().current('conversations.*'), icon: MessageCircle },
@@ -67,15 +69,15 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
         adminNavigation.push({ label: 'Audit log', href: route('admin.audit-logs.index'), active: route().current('admin.audit-logs.*'), icon: ScrollText });
     }
 
-    const NavigationGroup = ({ label, items }) => <div><p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">{label}</p><nav className="mt-2 space-y-1" aria-label={label}>{items.map((item) => { const Icon = item.icon; return <SidebarNavLink key={item.label} href={item.href} active={item.active} icon={<Icon size={19} strokeWidth={1.8} />} onClick={onNavigate}>{item.label}</SidebarNavLink>; })}</nav></div>;
+    const NavigationGroup = ({ label, items }) => <div>{!collapsed && <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">{label}</p>}<nav className={`mt-2 space-y-1 ${collapsed ? 'flex flex-col items-center' : ''}`} aria-label={label}>{items.map((item) => { const Icon = item.icon; return <SidebarNavLink key={item.label} href={item.href} active={item.active} icon={<Icon size={19} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? item.label : undefined}>{item.label}</SidebarNavLink>; })}</nav></div>;
 
     return (
-        <div className="flex h-full flex-col bg-brand-950 text-white">
-            <div className="flex h-20 shrink-0 items-center justify-between gap-3 border-b border-white/10 px-5">
+        <div className="flex h-full flex-col bg-brand-950 text-white transition-all duration-300">
+            <div className={`flex h-20 shrink-0 items-center justify-between gap-3 border-b border-white/10 ${collapsed ? 'flex-col justify-center gap-2 py-4' : 'px-5'}`}>
                 <Link href={route('dashboard')} onClick={onNavigate} aria-label="PJJ AI — Beranda">
-                    <BrandMark inverse />
+                    <BrandMark inverse compact={collapsed} />
                 </Link>
-                <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />
+                {!collapsed && <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />}
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-5">
@@ -84,22 +86,29 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
                 {adminNavigation.length > 0 && <NavigationGroup label={user.role === 'admin' ? 'Administrasi' : 'Moderasi'} items={adminNavigation} />}
 
                 <div className="border-t border-white/10 pt-5">
-                    <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">Akun</p>
-                    <nav className="mt-3 space-y-1" aria-label="Navigasi akun">
-                        <SidebarNavLink href={route('profile.edit')} active={route().current('profile.*')} icon={<UserRound size={20} strokeWidth={1.8} />} onClick={onNavigate}>Profil</SidebarNavLink>
-                        <SidebarNavLink href={route('privacy')} active={route().current('privacy')} icon={<ShieldCheck size={20} strokeWidth={1.8} />} onClick={onNavigate}>Privasi & kontribusi</SidebarNavLink>
+                    {!collapsed && <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">Akun</p>}
+                    <nav className={`mt-3 space-y-1 ${collapsed ? 'flex flex-col items-center' : ''}`} aria-label="Navigasi akun">
+                        <SidebarNavLink href={route('profile.edit')} active={route().current('profile.*')} icon={<UserRound size={20} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? 'Profil' : undefined}>Profil</SidebarNavLink>
+                        <SidebarNavLink href={route('privacy')} active={route().current('privacy')} icon={<ShieldCheck size={20} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? 'Privasi & kontribusi' : undefined}>Privasi & kontribusi</SidebarNavLink>
                     </nav>
                 </div>
             </div>
 
-            <div className="shrink-0 border-t border-white/10 p-3">
-                <div className="flex items-center gap-3 rounded-lg bg-white/[0.06] p-3">
-                    <UserAvatar user={user} />
-                    <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">{user.name}</p>
-                        <p className="mt-0.5 truncate text-xs text-brand-300">{roleLabels[user.role] || user.role}</p>
-                    </div>
-                    <Link method="post" href={route('logout')} as="button" onClick={onNavigate} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white" aria-label="Keluar dari akun">
+            <div className={`shrink-0 border-t border-white/10 p-3 flex ${collapsed ? 'flex-col items-center gap-3' : 'items-center gap-2'}`}>
+                {onToggleCollapse && (
+                    <button type="button" onClick={onToggleCollapse} className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white ${!collapsed && 'hidden lg:grid'}`} aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
+                        {collapsed ? <PanelLeftOpen size={20} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose size={20} strokeWidth={1.8} aria-hidden="true" />}
+                    </button>
+                )}
+                <div className={`flex items-center gap-3 rounded-lg bg-white/[0.06] p-3 flex-1 w-full ${collapsed ? 'justify-center p-2' : ''}`}>
+                    <UserAvatar user={user} size={collapsed ? 'sm' : 'md'} />
+                    {!collapsed && (
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+                            <p className="mt-0.5 truncate text-xs text-brand-300">{roleLabels[user.role] || user.role}</p>
+                        </div>
+                    )}
+                    <Link method="post" href={route('logout')} as="button" onClick={onNavigate} className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white ${collapsed ? 'mt-2' : ''}`} aria-label="Keluar dari akun" title={collapsed ? 'Keluar dari akun' : undefined}>
                         <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
                     </Link>
                 </div>
@@ -114,6 +123,22 @@ export default function AuthenticatedLayout({ header, children }) {
     const notifications = page.props.notifications || { unread_count: 0, items: [] };
     const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('sidebarCollapsed') === 'true';
+        }
+        return false;
+    });
+
+    const toggleCollapse = () => {
+        setSidebarCollapsed((prev) => {
+            const newVal = !prev;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('sidebarCollapsed', String(newVal));
+            }
+            return newVal;
+        });
+    };
 
     return (
         <div className="min-h-screen bg-paper text-ink">
@@ -121,8 +146,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 Lewati ke konten utama
             </a>
 
-            <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 lg:block xl:w-72">
-                <SidebarContent user={user} notifications={notifications} onOpenNotifications={() => setNotificationsOpen(true)} />
+            <aside className={`fixed inset-y-0 left-0 z-40 hidden transition-all duration-300 lg:block ${sidebarCollapsed ? 'w-20' : 'w-64 xl:w-72'}`}>
+                <SidebarContent user={user} notifications={notifications} onOpenNotifications={() => setNotificationsOpen(true)} collapsed={sidebarCollapsed} onToggleCollapse={toggleCollapse} />
             </aside>
 
             <Dialog open={mobileNavigationOpen} onClose={setMobileNavigationOpen} className="relative z-50 lg:hidden">
@@ -138,7 +163,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </div>
             </Dialog>
 
-            <div className="lg:pl-64 xl:pl-72">
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64 xl:pl-72'}`}>
                 <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-stone-200 bg-white px-4 sm:px-6 lg:hidden">
                     <Link href={route('dashboard')} aria-label="PJJ AI — Beranda"><BrandMark compact /></Link>
                     <div className="flex items-center gap-3">

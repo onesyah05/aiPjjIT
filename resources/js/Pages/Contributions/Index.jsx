@@ -48,6 +48,16 @@ export default function Index({ credentials, flash }) {
                             <input type="password" value={form.data.secret} onChange={(event) => form.setData('secret', event.target.value)} autoComplete="off" className={fieldClassName} required />
                         </label>
                         {form.errors.secret && <p className="text-sm text-red-700">{form.errors.secret}</p>}
+                        
+                        <details className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-600">
+                            <summary className="cursor-pointer font-medium text-brand-700 hover:text-brand-800">Cara mendapatkan API key Gemini</summary>
+                            <ol className="ml-4 mt-2 list-decimal space-y-1">
+                                <li>Buka <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="font-semibold text-brand-600 hover:underline">Google AI Studio</a>.</li>
+                                <li>Masuk menggunakan akun Google Anda.</li>
+                                <li>Klik tombol <strong>Create API key</strong> pada project baru atau project yang sudah ada.</li>
+                                <li>Salin API key yang dihasilkan dan tempelkan di atas.</li>
+                            </ol>
+                        </details>
 
                         <label className="block text-sm font-medium text-stone-700">
                             Batas request per hari <span className="font-normal text-stone-500">(opsional)</span>
