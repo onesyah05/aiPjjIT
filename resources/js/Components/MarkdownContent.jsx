@@ -22,11 +22,28 @@ export default function MarkdownContent({ content }) {
                 li: ({ children }) => <li className="pl-1 leading-7">{children}</li>,
                 blockquote: ({ children }) => <blockquote className="my-5 border-l-4 border-brand-300 bg-brand-50 px-4 py-2 text-stone-700">{children}</blockquote>,
                 hr: () => <hr className="my-6 border-stone-200" />,
-                a: ({ children, href }) => (
-                    <a href={href} target="_blank" rel="noreferrer" className="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:text-brand-900">
-                        {children}
-                    </a>
-                ),
+                a: ({ children, href }) => {
+                    const textContent = Array.isArray(children) ? children.join('') : (typeof children === 'string' ? children : '');
+                    const isImageURL = href && href.match(/\.(jpeg|jpg|gif|png|webp)(\?.*)?$/i);
+                    const isAttachment = textContent.includes('Attachment') || textContent.includes('Embed Thumbnail');
+                    
+                    if (isImageURL || isAttachment) {
+                        return (
+                            <img 
+                                src={href} 
+                                alt={isAttachment ? 'Attachment' : textContent} 
+                                onClick={(e) => { e.preventDefault(); setSelectedImage({ src: href, alt: isAttachment ? 'Attachment' : textContent }); }}
+                                className="inline-block h-28 w-28 rounded-lg border border-stone-200 object-cover m-1 cursor-pointer hover:opacity-80 transition-opacity shadow-sm" 
+                            />
+                        );
+                    }
+                    
+                    return (
+                        <a href={href} target="_blank" rel="noreferrer" className="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:text-brand-900">
+                            {children}
+                        </a>
+                    );
+                },
                 pre: ({ children }) => <pre className="my-5 overflow-x-auto rounded-lg border border-stone-800 bg-stone-950 p-4 text-sm leading-6 text-stone-100 shadow-inner">{children}</pre>,
                 code: ({ children, className }) => {
                     const isBlock = className || String(children).includes('\n');
