@@ -16,6 +16,27 @@ class DiscordService
     }
 
     /**
+     * Get channel information
+     */
+    public function getChannel(string $channelId): ?array
+    {
+        if (!$this->token) {
+            return null;
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bot ' . $this->token,
+        ])->get("{$this->baseUrl}/channels/{$channelId}");
+
+        if ($response->successful()) {
+            return $response->json();
+        }
+
+        Log::error("Failed to fetch Discord channel {$channelId}: " . $response->body());
+        return null;
+    }
+
+    /**
      * Get messages from a specific channel or thread
      */
     public function getChannelMessages(string $channelId, int $limit = 50): array
@@ -57,6 +78,27 @@ class DiscordService
         }
 
         Log::error("Failed to fetch Discord active threads for guild {$guildId}: " . $response->body());
+        return [];
+    }
+
+    /**
+     * Get archived threads for a channel
+     */
+    public function getArchivedThreads(string $channelId): array
+    {
+        if (!$this->token) {
+            return [];
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bot ' . $this->token,
+        ])->get("{$this->baseUrl}/channels/{$channelId}/threads/archived/public");
+
+        if ($response->successful()) {
+            return $response->json()['threads'] ?? [];
+        }
+
+        Log::error("Failed to fetch Discord archived threads for channel {$channelId}: " . $response->body());
         return [];
     }
 }
