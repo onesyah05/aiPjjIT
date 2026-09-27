@@ -40,11 +40,13 @@ return [
         'client_secret' => env('DISCORD_CLIENT_SECRET'),
         'bot_token' => env('DISCORD_BOT_TOKEN'),
         'redirect' => env('DISCORD_REDIRECT_URI', '/auth/discord/callback'),
-        'guild_id' => env('DISCORD_GUILD_ID'),
-        'membership_recheck_hours' => (int) env('DISCORD_MEMBERSHIP_RECHECK_HOURS', 24),
-        'admin_role_ids' => array_values(array_filter(explode(',', (string) env('DISCORD_ADMIN_ROLE_IDS', '')))),
-        'reviewer_role_ids' => array_values(array_filter(explode(',', (string) env('DISCORD_REVIEWER_ROLE_IDS', '')))),
-        'channel_ids' => array_values(array_filter(explode(',', (string) env('DISCORD_CHANNEL_IDS', '')))),
+        'guild_id'                  => env('DISCORD_GUILD_ID'),
+        'membership_recheck_hours'  => (int) env('DISCORD_MEMBERSHIP_RECHECK_HOURS', 24),
+        'admin_role_ids'            => array_values(array_filter(explode(',', (string) env('DISCORD_ADMIN_ROLE_IDS', '')))),
+        'reviewer_role_ids'         => array_values(array_filter(explode(',', (string) env('DISCORD_REVIEWER_ROLE_IDS', '')))),
+        'channel_ids'               => array_values(array_filter(explode(',', (string) env('DISCORD_CHANNEL_IDS', '')))),
+        'webhook_secret'            => env('DISCORD_WEBHOOK_SECRET'),
+        'bot_channel_id'            => env('DISCORD_BOT_CHANNEL_ID', '1552943987428425828'),
     ],
 
     'gemini' => [
