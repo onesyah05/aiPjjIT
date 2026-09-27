@@ -39,25 +39,43 @@ class DiscordService
     /**
      * Get messages from a specific channel or thread
      */
-    public function getChannelMessages(string $channelId, int $limit = 50): array
+    public function getChannelMessages(string $channelId, int $limit = 500): array
     {
         if (!$this->token) {
             Log::warning('Discord Bot Token is not configured.');
             return [];
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bot ' . $this->token,
-        ])->get("{$this->baseUrl}/channels/{$channelId}/messages", [
-            'limit' => $limit,
-        ]);
+        $allMessages = [];
+        $lastMessageId = null;
 
-        if ($response->successful()) {
-            return $response->json();
+        while (count($allMessages) < $limit) {
+            $fetchLimit = min(100, $limit - count($allMessages));
+            $query = ['limit' => $fetchLimit];
+            
+            if ($lastMessageId) {
+                $query['before'] = $lastMessageId;
+            }
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bot ' . $this->token,
+            ])->get("{$this->baseUrl}/channels/{$channelId}/messages", $query);
+
+            if (!$response->successful()) {
+                Log::error("Failed to fetch Discord messages for channel {$channelId}: " . $response->body());
+                break;
+            }
+
+            $messages = $response->json();
+            if (empty($messages)) {
+                break;
+            }
+
+            $allMessages = array_merge($allMessages, $messages);
+            $lastMessageId = end($messages)['id'];
         }
 
-        Log::error("Failed to fetch Discord messages for channel {$channelId}: " . $response->body());
-        return [];
+        return $allMessages;
     }
 
     /**

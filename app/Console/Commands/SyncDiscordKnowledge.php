@@ -89,7 +89,7 @@ class SyncDiscordKnowledge extends Command
     private function processThread(DiscordService $discord, User $systemUser, string $threadId, string $title)
     {
         $this->info("Fetching messages for thread: {$title}");
-        $messages = $discord->getChannelMessages($threadId, 100);
+        $messages = $discord->getChannelMessages($threadId, 1000);
         
         if (empty($messages)) {
             return;
@@ -124,8 +124,8 @@ class SyncDiscordKnowledge extends Command
                         $attachments .= "\n\n![Embed Thumbnail]({$embed['thumbnail']['url']})";
                     }
                     if (!empty($embed['url'])) {
-                        $title = $embed['title'] ?? 'Link';
-                        $attachments .= "\n\n[{$title}]({$embed['url']})";
+                        $embedTitle = $embed['title'] ?? 'Link';
+                        $attachments .= "\n\n[{$embedTitle}]({$embed['url']})";
                     }
                 }
             }
@@ -146,7 +146,7 @@ class SyncDiscordKnowledge extends Command
     private function processRegularChannel(DiscordService $discord, User $systemUser, string $channelId, string $title)
     {
         $this->info("Fetching messages for channel: {$title}");
-        $messages = $discord->getChannelMessages($channelId, 100);
+        $messages = $discord->getChannelMessages($channelId, 1000);
 
         if (empty($messages)) {
             return;
@@ -181,8 +181,8 @@ class SyncDiscordKnowledge extends Command
                         $attachments .= "\n\n![Embed Thumbnail]({$embed['thumbnail']['url']})";
                     }
                     if (!empty($embed['url'])) {
-                        $title = $embed['title'] ?? 'Link';
-                        $attachments .= "\n\n[{$title}]({$embed['url']})";
+                        $embedTitle = $embed['title'] ?? 'Link';
+                        $attachments .= "\n\n[{$embedTitle}]({$embed['url']})";
                     }
                 }
             }
