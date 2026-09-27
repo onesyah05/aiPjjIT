@@ -7,6 +7,8 @@ use App\Models\DiscordBotConversation;
 use App\Models\KnowledgeChunk;
 use App\Services\AI\GeminiService;
 use App\Services\CredentialPoolService;
+use App\Services\Knowledge\KnowledgeLinkExtractor;
+use App\Services\Knowledge\RetrievalService;
 use App\Services\PromptBuilderService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -37,6 +39,8 @@ class HandleDiscordMention implements ShouldQueue
         GeminiService $gemini,
         CredentialPoolService $credentialPool,
         PromptBuilderService $promptBuilder,
+        RetrievalService $retrievalService,
+        KnowledgeLinkExtractor $linkExtractor,
     ): void {
         // Idempotency: skip if already processed
         if (DiscordBotConversation::where('discord_message_id', $this->messageId)->exists()) {
@@ -58,14 +62,17 @@ class HandleDiscordMention implements ShouldQueue
         $startedAt = hrtime(true);
 
         try {
-            $retrieved = $this->retrieveKnowledge($this->question);
+            $dummyUser = \App\Models\User::first() ?? new \App\Models\User(['id' => 1]);
+            $dummyConversation = new \App\Models\Conversation(['course_id' => null, 'user_id' => $dummyUser->id]);
+
+            $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question);
 
             $prompt = $promptBuilder->build(
                 $this->question,
                 $retrieved->map(fn (array $r): array => [
                     'content' => $r['content'],
                     'score' => $r['score'],
-                    'links' => [],
+                    'links' => $linkExtractor->extract($r['chunk']->version?->content ?? $r['content']),
                 ])->all(),
                 'general',
                 [],
@@ -122,41 +129,7 @@ class HandleDiscordMention implements ShouldQueue
         }
     }
 
-    /** @return Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}> */
-    private function retrieveKnowledge(string $question): Collection
-    {
-        $terms = collect(preg_split('/[^\pL\pN]+/u', Str::lower($question)) ?: [])
-            ->filter(fn (string $t): bool => mb_strlen($t) >= 3)
-            ->unique()
-            ->values();
 
-        if ($terms->isEmpty()) {
-            return collect();
-        }
-
-        return KnowledgeChunk::query()
-            ->select('knowledge_chunks.*')
-            ->join('knowledge_versions', 'knowledge_versions.id', '=', 'knowledge_chunks.knowledge_version_id')
-            ->join('knowledges', 'knowledges.id', '=', 'knowledge_versions.knowledge_id')
-            ->whereNull('knowledges.deleted_at')
-            ->whereColumn('knowledges.active_version_id', 'knowledge_versions.id')
-            ->where('knowledge_versions.status', 'approved')
-            ->where('knowledge_versions.processing_status', 'ready')
-            ->whereIn('knowledges.visibility', ['community', 'course'])
-            ->where('knowledges.status', 'approved')
-            ->limit(200)
-            ->get()
-            ->map(function (KnowledgeChunk $chunk) use ($terms): array {
-                $content = Str::lower($chunk->content);
-                $matches = $terms->filter(fn (string $t): bool => str_contains($content, $t))->count();
-
-                return ['chunk' => $chunk, 'content' => $chunk->content, 'score' => $matches / $terms->count()];
-            })
-            ->filter(fn (array $r): bool => $r['score'] > 0)
-            ->sortByDesc('score')
-            ->take(5)
-            ->values();
-    }
 
     /**
      * @param  Collection<int, AiCredential>  $credentials
