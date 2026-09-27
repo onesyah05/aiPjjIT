@@ -183,6 +183,12 @@ class ChatService
 
                 if ($status === 429) {
                     $this->credentialPool->markRateLimitHit($credential);
+                } elseif ($status === 503) {
+                    // Service overloaded — short cooldown, try next credential
+                    $credential->update([
+                        'cooldown_until' => now()->addSeconds(30),
+                        'last_error_code' => 'http_503',
+                    ]);
                 } elseif (in_array($status, [401, 403], true)) {
                     $this->credentialPool->markInvalid(
                         $credential,

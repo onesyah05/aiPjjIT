@@ -53,7 +53,7 @@ return [
         'embedding_model' => env('AI_EMBEDDING_MODEL', 'gemini-embedding-001'),
         'embedding_dimensions' => (int) env('AI_EMBEDDING_DIMENSIONS', 768),
         'timeout' => (int) env('AI_REQUEST_TIMEOUT', 60),
-        'max_attempts' => (int) env('AI_MAX_CREDENTIAL_ATTEMPTS', 3),
+        'max_attempts' => (int) env('AI_MAX_CREDENTIAL_ATTEMPTS', 6),
     ],
 
     'qdrant' => [
