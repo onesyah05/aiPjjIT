@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -101,12 +102,24 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
         } catch (Throwable $exception) {
             $credentialPool->recordFailure($credential, 'embedding_or_vector_error');
 
-            if ($exception instanceof RequestException && in_array($exception->response->status(), [401, 403], true)) {
-                $credentialPool->markInvalid(
-                    $credential,
-                    'embedding_auth_failed',
-                    'Credential ditolak saat memproses embedding knowledge. Periksa key dan izin project Anda.',
-                );
+            if ($exception instanceof RequestException) {
+                $status = $exception->response->status();
+
+                if (in_array($status, [401, 403], true)) {
+                    $credentialPool->markInvalid(
+                        $credential,
+                        'embedding_auth_failed',
+                        'Credential ditolak saat memproses embedding knowledge. Periksa key dan izin project Anda.',
+                    );
+                } elseif (in_array($status, [429, 503], true)) {
+                    // Put this credential on cooldown for 30 seconds
+                    Cache::put("credential_cooldown_{$credential->id}", true, now()->addSeconds(30));
+
+                    // Delay the retry of this job by 15 seconds
+                    $this->release(15);
+
+                    return;
+                }
             }
 
             $log->update([
