@@ -116,6 +116,19 @@ class SyncDiscordKnowledge extends Command
                     }
                 }
             }
+            if (!empty($msg['embeds'])) {
+                foreach ($msg['embeds'] as $embed) {
+                    if (!empty($embed['image']['url'])) {
+                        $attachments .= "\n\n![Embed Image]({$embed['image']['url']})";
+                    } elseif (!empty($embed['thumbnail']['url'])) {
+                        $attachments .= "\n\n![Embed Thumbnail]({$embed['thumbnail']['url']})";
+                    }
+                    if (!empty($embed['url'])) {
+                        $title = $embed['title'] ?? 'Link';
+                        $attachments .= "\n\n[{$title}]({$embed['url']})";
+                    }
+                }
+            }
 
             if (empty($text) && empty($attachments)) continue;
             
@@ -157,6 +170,19 @@ class SyncDiscordKnowledge extends Command
                         } else {
                             $attachments .= "\n\n[Attachment file: {$attachment['filename']}]({$url})";
                         }
+                    }
+                }
+            }
+            if (!empty($msg['embeds'])) {
+                foreach ($msg['embeds'] as $embed) {
+                    if (!empty($embed['image']['url'])) {
+                        $attachments .= "\n\n![Embed Image]({$embed['image']['url']})";
+                    } elseif (!empty($embed['thumbnail']['url'])) {
+                        $attachments .= "\n\n![Embed Thumbnail]({$embed['thumbnail']['url']})";
+                    }
+                    if (!empty($embed['url'])) {
+                        $title = $embed['title'] ?? 'Link';
+                        $attachments .= "\n\n[{$title}]({$embed['url']})";
                     }
                 }
             }
