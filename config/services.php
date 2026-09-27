@@ -49,7 +49,7 @@ return [
 
     'gemini' => [
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
-        'model' => env('AI_DEFAULT_MODEL', 'gemini-1.5-flash'),
+        'model' => env('AI_DEFAULT_MODEL', 'gemini-3.8-flash'),
         'embedding_model' => env('AI_EMBEDDING_MODEL', 'gemini-embedding-001'),
         'embedding_dimensions' => (int) env('AI_EMBEDDING_DIMENSIONS', 768),
         'timeout' => (int) env('AI_REQUEST_TIMEOUT', 60),
