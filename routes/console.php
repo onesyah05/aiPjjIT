@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('discord:sync-knowledge')->hourly();
+Schedule::command('discord:poll-mentions')->everyMinute()->withoutOverlapping();
+
