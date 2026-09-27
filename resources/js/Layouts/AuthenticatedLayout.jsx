@@ -81,11 +81,6 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                     {!collapsed && <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />}
-                    {onToggleCollapse && (
-                        <button type="button" onClick={onToggleCollapse} className={`hidden lg:grid h-8 w-8 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white`} aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
-                            {collapsed ? <PanelLeftOpen size={18} strokeWidth={2} aria-hidden="true" /> : <PanelLeftClose size={18} strokeWidth={2} aria-hidden="true" />}
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -116,6 +111,11 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
                         <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
                     </Link>
                 </div>
+                {onToggleCollapse && (
+                    <button type="button" onClick={onToggleCollapse} className={`hidden lg:grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white ${collapsed ? 'mt-2' : ''}`} aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
+                        {collapsed ? <PanelLeftOpen size={20} strokeWidth={1.8} aria-hidden="true" /> : <PanelLeftClose size={20} strokeWidth={1.8} aria-hidden="true" />}
+                    </button>
+                )}
             </div>
         </div>
     );

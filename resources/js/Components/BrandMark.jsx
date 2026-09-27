@@ -10,7 +10,7 @@ export default function BrandMark({ inverse = false, compact = false }) {
                 <span className={`min-w-0 ${inverse ? 'text-white' : 'text-ink'}`}>
                     <span className="block text-sm font-bold leading-none tracking-wide">PJJ AI</span>
                     <span className={`mt-1 hidden whitespace-normal break-words leading-[1.2] text-[10px] font-medium uppercase tracking-[0.08em] sm:block ${inverse ? 'text-brand-200' : 'text-stone-500'}`}>
-                        Universitas Siber Muhammadiyah
+                        Universitas Siber<br />Muhammadiyah
                     </span>
                 </span>
             )}
