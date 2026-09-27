@@ -100,9 +100,27 @@ class SyncDiscordKnowledge extends Command
 
         $content = "";
         foreach ($messages as $msg) {
-            if (empty(trim($msg['content']))) continue;
+            $text = trim($msg['content'] ?? '');
+            
+            $attachments = "";
+            if (!empty($msg['attachments'])) {
+                foreach ($msg['attachments'] as $attachment) {
+                    if (!empty($attachment['url'])) {
+                        $url = $attachment['url'];
+                        $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', parse_url($url, PHP_URL_PATH));
+                        if ($isImage) {
+                            $attachments .= "\n\n![Attachment]({$url})";
+                        } else {
+                            $attachments .= "\n\n[Attachment file: {$attachment['filename']}]({$url})";
+                        }
+                    }
+                }
+            }
+
+            if (empty($text) && empty($attachments)) continue;
+            
             $author = $msg['author']['username'] ?? 'Unknown';
-            $content .= "**{$author}**: {$msg['content']}\n\n";
+            $content .= "**{$author}**: {$text}{$attachments}\n\n";
         }
 
         if (empty(trim($content))) {
@@ -126,9 +144,27 @@ class SyncDiscordKnowledge extends Command
 
         $content = "";
         foreach ($messages as $msg) {
-            if (empty(trim($msg['content']))) continue;
+            $text = trim($msg['content'] ?? '');
+            
+            $attachments = "";
+            if (!empty($msg['attachments'])) {
+                foreach ($msg['attachments'] as $attachment) {
+                    if (!empty($attachment['url'])) {
+                        $url = $attachment['url'];
+                        $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', parse_url($url, PHP_URL_PATH));
+                        if ($isImage) {
+                            $attachments .= "\n\n![Attachment]({$url})";
+                        } else {
+                            $attachments .= "\n\n[Attachment file: {$attachment['filename']}]({$url})";
+                        }
+                    }
+                }
+            }
+
+            if (empty($text) && empty($attachments)) continue;
+            
             $author = $msg['author']['username'] ?? 'Unknown';
-            $content .= "**{$author}**: {$msg['content']}\n\n";
+            $content .= "**{$author}**: {$text}{$attachments}\n\n";
         }
 
         if (empty(trim($content))) {
