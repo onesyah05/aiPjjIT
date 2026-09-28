@@ -3,8 +3,9 @@
 namespace App\Jobs;
 
 use App\Models\AiCredential;
+use App\Models\Conversation;
 use App\Models\DiscordBotConversation;
-use App\Models\KnowledgeChunk;
+use App\Models\User;
 use App\Services\AI\GeminiService;
 use App\Services\CredentialPoolService;
 use App\Services\Knowledge\KnowledgeLinkExtractor;
@@ -16,7 +17,6 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Throwable;
 
 class HandleDiscordMention implements ShouldQueue
@@ -59,11 +59,14 @@ class HandleDiscordMention implements ShouldQueue
         // Typing indicator
         $this->sendTyping();
 
+        $placeholderId = $this->replyToDiscord('Memproses jawaban... ⏳');
+        $lastEditTime = microtime(true);
+
         $startedAt = hrtime(true);
 
         try {
-            $dummyUser = \App\Models\User::first() ?? new \App\Models\User(['id' => 1]);
-            $dummyConversation = new \App\Models\Conversation(['course_id' => null, 'user_id' => $dummyUser->id]);
+            $dummyUser = User::first() ?? new User(['id' => 1]);
+            $dummyConversation = new Conversation(['course_id' => null, 'user_id' => $dummyUser->id]);
 
             $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question);
 
@@ -84,16 +87,23 @@ class HandleDiscordMention implements ShouldQueue
 
             if ($credentials->isEmpty()) {
                 $record->update(['status' => 'failed', 'error_code' => 'credentials_unavailable']);
-                $this->replyToDiscord('⚠️ Semua credential AI sedang tidak tersedia. Coba lagi nanti.');
+                $msg = '⚠️ Semua credential AI sedang tidak tersedia. Coba lagi nanti.';
+                $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
 
                 return;
             }
 
-            $answer = $this->tryGenerateAnswer($gemini, $credentialPool, $credentials, $prompt);
+            $answer = $this->tryGenerateAnswer($gemini, $credentialPool, $credentials, $prompt, function (string $partial) use ($placeholderId, &$lastEditTime) {
+                if ($placeholderId && microtime(true) - $lastEditTime > 1.5) {
+                    $this->editDiscordMessage($placeholderId, mb_substr("<@{$this->userId}>\n\n".$partial, 0, 1950).' ⏳');
+                    $lastEditTime = microtime(true);
+                }
+            });
 
             if ($answer === null) {
                 $record->update(['status' => 'failed', 'error_code' => 'generation_failed']);
-                $this->replyToDiscord('⚠️ Gagal mendapatkan jawaban dari AI. Silakan coba lagi.');
+                $msg = '⚠️ Gagal mendapatkan jawaban dari AI. Silakan coba lagi.';
+                $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
 
                 return;
             }
@@ -112,6 +122,12 @@ class HandleDiscordMention implements ShouldQueue
 
             // 4. Split message if it's too long (> 1950 chars)
             $textChunks = mb_str_split($fullReply, 1950);
+
+            if ($placeholderId) {
+                $this->editDiscordMessage($placeholderId, $textChunks[0]);
+                unset($textChunks[0]);
+            }
+
             foreach ($textChunks as $chunk) {
                 $this->replyToDiscord($chunk);
             }
@@ -125,11 +141,10 @@ class HandleDiscordMention implements ShouldQueue
         } catch (Throwable $e) {
             Log::error('HandleDiscordMention failed', ['error' => $e->getMessage(), 'channel' => $this->channelId]);
             $record->update(['status' => 'failed', 'error_code' => 'exception']);
-            $this->replyToDiscord('⚠️ Terjadi kesalahan saat memproses pertanyaanmu. Coba lagi nanti.');
+            $msg = '⚠️ Terjadi kesalahan saat memproses pertanyaanmu. Coba lagi nanti.';
+            isset($placeholderId) && $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
         }
     }
-
-
 
     /**
      * @param  Collection<int, AiCredential>  $credentials
@@ -139,6 +154,7 @@ class HandleDiscordMention implements ShouldQueue
         CredentialPoolService $credentialPool,
         Collection $credentials,
         string $prompt,
+        ?callable $onProgress = null,
     ): ?string {
         foreach ($credentials as $credential) {
             $credentialPool->recordAttempt($credential);
@@ -147,6 +163,9 @@ class HandleDiscordMention implements ShouldQueue
                 $content = '';
                 foreach ($gemini->stream($credential->encrypted_secret, $prompt) as $chunk) {
                     $content .= $chunk;
+                    if ($onProgress) {
+                        $onProgress($content);
+                    }
                 }
 
                 if ($content !== '') {
@@ -184,14 +203,29 @@ class HandleDiscordMention implements ShouldQueue
         }
     }
 
-    private function replyToDiscord(string $content): void
+    private function replyToDiscord(string $content): ?string
     {
         $token = config('services.discord.bot_token');
 
-        Http::withHeaders(['Authorization' => "Bot {$token}"])
+        $response = Http::withHeaders(['Authorization' => "Bot {$token}"])
             ->post("https://discord.com/api/v10/channels/{$this->channelId}/messages", [
                 'content' => $content,
                 'message_reference' => ['message_id' => $this->messageId],
             ]);
+
+        return $response->json('id');
+    }
+
+    private function editDiscordMessage(string $msgId, string $content): void
+    {
+        $token = config('services.discord.bot_token');
+        try {
+            Http::withHeaders(['Authorization' => "Bot {$token}"])
+                ->patch("https://discord.com/api/v10/channels/{$this->channelId}/messages/{$msgId}", [
+                    'content' => $content,
+                ]);
+        } catch (Throwable) {
+            // Ignore edit failures
+        }
     }
 }
