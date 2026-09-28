@@ -48,6 +48,15 @@ return [
         'channel_ids' => array_values(array_filter(explode(',', (string) env('DISCORD_CHANNEL_IDS', '')))),
         'webhook_secret' => env('DISCORD_WEBHOOK_SECRET'),
         'bot_channel_id' => env('DISCORD_BOT_CHANNEL_ID', '1545331030083506226'),
+        'public_key' => env('DISCORD_PUBLIC_KEY'),
+        'donation_channel_id' => env('DISCORD_DONATION_CHANNEL_ID', '1554268154501271552'),
+    ],
+
+    'pakasir' => [
+        'slug' => env('PAKASIR_SLUG'),
+        'api_key' => env('PAKASIR_API_KEY'),
+        'webhook_secret' => env('PAKASIR_WEBHOOK_SECRET'),
+        'sandbox' => (bool) env('PAKASIR_SANDBOX', true),
     ],
 
     'gemini' => [

@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'discord/webhook',
+            'discord/interactions',
+            'payments/pakasir/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

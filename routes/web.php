@@ -9,12 +9,14 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AiCredentialController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ConversationController;
-use App\Http\Controllers\DiscordWebhookController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DiscordInteractionController;
+use App\Http\Controllers\DiscordWebhookController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\MessageFeedbackController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PakasirWebhookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +29,8 @@ Route::get('/privacy', fn () => Inertia::render('Privacy'))->name('privacy');
 
 // Discord bot webhook — no auth, CSRF excluded via bootstrap/app.php
 Route::post('/discord/webhook', [DiscordWebhookController::class, 'handle'])->name('discord.webhook');
+Route::post('/discord/interactions', DiscordInteractionController::class)->name('discord.interactions');
+Route::post('/payments/pakasir/webhook', PakasirWebhookController::class)->name('pakasir.webhook');
 
 Route::middleware(['auth', 'discord.member'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
