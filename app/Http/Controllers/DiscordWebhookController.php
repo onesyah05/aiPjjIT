@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\HandleDiscordMention;
+use App\Jobs\IndexDiscordMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -60,7 +61,10 @@ class DiscordWebhookController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // Only respond in the designated channel
+        // Realtime knowledge indexing: index every human message from configured channels
+        $this->indexIfKnowledgeChannel($channelId, $username, $content, $data);
+
+        // Only respond to mentions in the designated channel
         if ($channelId !== self::ALLOWED_CHANNEL_ID) {
             return response()->json(['ok' => true]);
         }
@@ -95,5 +99,35 @@ class DiscordWebhookController extends Controller
         );
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * If the message comes from one of the configured knowledge channels (or a thread
+     * parented to one), dispatch a job to index it into the knowledge base immediately.
+     */
+    private function indexIfKnowledgeChannel(string $channelId, string $username, string $content, array $data): void
+    {
+        $knowledgeChannels = config('services.discord.channel_ids', []);
+
+        if (empty($knowledgeChannels)) {
+            return;
+        }
+
+        // Match if the message channel or its parent (for threads) is a configured knowledge channel
+        $parentId = (string) ($data['parent_id'] ?? '');
+        $isKnowledgeChannel = in_array($channelId, $knowledgeChannels, true)
+            || ($parentId !== '' && in_array($parentId, $knowledgeChannels, true));
+
+        if (! $isKnowledgeChannel) {
+            return;
+        }
+
+        IndexDiscordMessage::dispatch(
+            channelId: $channelId,
+            authorUsername: $username,
+            messageContent: $content,
+            attachments: $data['attachments'] ?? [],
+            embeds: $data['embeds'] ?? [],
+        );
     }
 }

@@ -8,4 +8,4 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('discord:sync-knowledge')->hourly();
+Schedule::command('discord:sync-knowledge')->everyFifteenMinutes();
