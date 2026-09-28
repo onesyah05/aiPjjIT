@@ -21,7 +21,7 @@ class PakasirClient
         return Http::withHeaders(['X-Api-Key' => config('services.pakasir.api_key')])
             ->acceptJson()->connectTimeout(5)->timeout(15)
             ->post($this->url('create-transaction', $donation->order_id), [
-                'method' => 'payment_link',
+                'method' => 'qris',
                 'amount' => $donation->amount,
             ])->throw()->json();
     }

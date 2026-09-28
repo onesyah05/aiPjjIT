@@ -43,7 +43,10 @@ class DiscordInteractionControllerTest extends TestCase
         $this->signedInteraction($this->interaction(3, ['custom_id' => 'donation:open']))
             ->assertOk()->assertJsonPath('type', 9)
             ->assertJsonPath('data.components.0.type', 18)
-            ->assertJsonPath('data.components.0.component.custom_id', 'amount');
+            ->assertJsonPath('data.components.0.component.custom_id', 'amount')
+            ->assertJsonPath('data.components.0.component.style', 1)
+            ->assertJsonPath('data.components.1.component.style', 2)
+            ->assertJsonPath('data.components.2.component.style', 1);
     }
 
     public function test_valid_submission_is_queued_without_marking_it_paid(): void
@@ -67,6 +70,16 @@ class DiscordInteractionControllerTest extends TestCase
         $this->signedInteraction($this->interaction(5, [
             'custom_id' => 'donation:submit',
             'components' => [['type' => 18, 'component' => ['custom_id' => 'amount', 'value' => '100']]],
+        ]))->assertJsonPath('type', 4);
+
+        $this->assertDatabaseCount('donations', 0);
+    }
+
+    public function test_amount_above_qris_limit_does_not_create_donation(): void
+    {
+        $this->signedInteraction($this->interaction(5, [
+            'custom_id' => 'donation:submit',
+            'components' => [['type' => 18, 'component' => ['custom_id' => 'amount', 'value' => '10000001']]],
         ]))->assertJsonPath('type', 4);
 
         $this->assertDatabaseCount('donations', 0);

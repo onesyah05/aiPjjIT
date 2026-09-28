@@ -13,49 +13,96 @@ class DonationCheckoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_checkout_uses_pakasir_v2_and_sends_private_payment_link(): void
+    public function test_checkout_creates_qris_and_sends_the_image_by_dm(): void
     {
-        config()->set('services.pakasir.slug', 'test-project');
-        config()->set('services.pakasir.api_key', 'test-key');
-
-        $donation = Donation::query()->create([
-            'order_id' => 'don-test', 'discord_interaction_id' => '123456789012345678',
-            'discord_user_id' => '111111111111111111', 'discord_username' => 'donor',
-            'guild_id' => '1542836975386624130', 'channel_id' => '1554268154501271552',
-            'amount' => 50000, 'is_sandbox' => true,
-        ]);
+        $donation = $this->donation();
         Http::fake([
-            'app.pakasir.com/*' => Http::response(['txn_id' => 'txn-test', 'payment_link' => 'https://app.pakasir.com/pay-v2/txn-test']),
-            'discord.com/*' => Http::response([], 200),
+            'app.pakasir.com/*' => Http::response($this->transaction()),
+            'discord.com/api/v10/users/@me/channels' => Http::response(['id' => '333333333333333333']),
+            'discord.com/api/v10/channels/*/messages' => Http::response(['id' => '444444444444444444']),
+            'discord.com/api/v10/webhooks/*' => Http::response([], 200),
         ]);
 
         (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
 
-        $this->assertDatabaseHas('donations', ['id' => $donation->id, 'pakasir_txn_id' => 'txn-test', 'status' => 'pending']);
+        $this->assertDatabaseHas('donations', [
+            'id' => $donation->id,
+            'pakasir_txn_id' => 'txn-test',
+            'total_payment' => 50660,
+            'dm_message_id' => '444444444444444444',
+            'status' => 'pending',
+        ]);
+        $this->assertSame('000201QRIS-TEST', $donation->fresh()->qr_string);
         Http::assertSent(fn ($request) => $request->method() === 'POST'
             && $request->url() === 'https://app.pakasir.com/api/v2/create-transaction/test-project/don-test'
             && $request['amount'] === 50000
-            && $request['method'] === 'payment_link');
+            && $request['method'] === 'qris');
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->url() === 'https://discord.com/api/v10/users/@me/channels'
+            && $request['recipient_id'] === '111111111111111111');
+        Http::assertSent(fn ($request) => $request->method() === 'POST'
+            && $request->url() === 'https://discord.com/api/v10/channels/333333333333333333/messages'
+            && $request->isMultipart()
+            && $request->hasFile('files[0]', filename: 'donasi-qris.png'));
         Http::assertSent(fn ($request) => $request->method() === 'PATCH'
             && str_contains($request->url(), '/webhooks/222222222222222222/interaction-token/messages/@original')
-            && $request['components'][0]['components'][0]['url'] === 'https://app.pakasir.com/pay-v2/txn-test');
+            && str_contains($request['content'], 'DM Anda'));
     }
 
-    public function test_checkout_rejects_untrusted_payment_link(): void
+    public function test_retry_does_not_create_another_transaction_or_dm(): void
+    {
+        $donation = $this->donation();
+        $donation->update([
+            'pakasir_txn_id' => 'txn-test',
+            'qr_string' => '000201QRIS-TEST',
+            'total_payment' => 50660,
+            'qris_expires_at' => now()->addHour(),
+            'dm_message_id' => '444444444444444444',
+        ]);
+        Http::fake(['discord.com/api/v10/webhooks/*' => Http::response([], 200)]);
+
+        (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_checkout_rejects_inconsistent_pakasir_response(): void
+    {
+        $donation = $this->donation();
+        Http::fake(['app.pakasir.com/*' => Http::response(array_replace($this->transaction(), ['amount' => 60000]))]);
+
+        $this->expectException(\RuntimeException::class);
+        (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
+    }
+
+    private function donation(): Donation
     {
         config()->set('services.pakasir.slug', 'test-project');
         config()->set('services.pakasir.api_key', 'test-key');
+        config()->set('services.discord.bot_token', 'test-bot-token');
 
-        $donation = Donation::query()->create([
+        return Donation::query()->create([
             'order_id' => 'don-test', 'discord_interaction_id' => '123456789012345678',
             'discord_user_id' => '111111111111111111', 'discord_username' => 'donor',
             'guild_id' => '1542836975386624130', 'channel_id' => '1554268154501271552',
             'amount' => 50000, 'is_sandbox' => true,
         ]);
-        Http::fake(['app.pakasir.com/*' => Http::response(['txn_id' => 'txn-test', 'payment_link' => 'https://evil.example/pay'])]);
+    }
 
-        $this->expectException(\RuntimeException::class);
-        (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
-
+    /** @return array<string, mixed> */
+    private function transaction(): array
+    {
+        return [
+            'txn_id' => 'txn-test',
+            'project' => 'test-project',
+            'order_id' => 'don-test',
+            'amount' => 50000,
+            'total_payment' => 50660,
+            'payment_method' => 'qris',
+            'status' => 'pending',
+            'qr_string' => '000201QRIS-TEST',
+            'expired_at' => now()->addHour()->toISOString(),
+            'is_sandbox' => true,
+        ];
     }
 }

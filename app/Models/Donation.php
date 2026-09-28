@@ -14,6 +14,9 @@ class Donation extends Model
             'amount' => 'integer',
             'is_sandbox' => 'boolean',
             'paid_at' => 'datetime',
+            'qr_string' => 'encrypted',
+            'total_payment' => 'integer',
+            'qris_expires_at' => 'datetime',
         ];
     }
 }

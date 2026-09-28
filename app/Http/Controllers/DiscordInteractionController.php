@@ -34,9 +34,9 @@ class DiscordInteractionController extends Controller
                 'custom_id' => 'donation:submit',
                 'title' => 'Donate',
                 'components' => [
-                    $this->label('Amount (IDR)', 'amount', 4, true, '50000', 3, 8),
+                    $this->label('Amount (IDR)', 'amount', 1, true, '50000', 3, 8),
                     $this->label('Message (optional)', 'message', 2, false, 'Ditampilkan setelah pembayaran', 0, 500),
-                    $this->label('Image/GIF URL (Rp25.000+)', 'image_url', 4, false, 'https://...', 0, 255),
+                    $this->label('Image/GIF URL (Rp25.000+)', 'image_url', 1, false, 'https://...', 0, 255),
                 ],
             ]]);
         }
@@ -54,13 +54,13 @@ class DiscordInteractionController extends Controller
         }
 
         $validator = Validator::make($values, [
-            'amount' => ['required', 'integer', 'between:500,50000000'],
+            'amount' => ['required', 'integer', 'between:500,10000000'],
             'message' => ['nullable', 'string', 'max:500'],
             'image_url' => ['nullable', 'url:http,https', 'max:255'],
         ]);
 
         if ($validator->fails()) {
-            return $this->ephemeral('Nominal harus Rp500–Rp50.000.000; periksa juga pesan dan URL gambar.');
+            return $this->ephemeral('Nominal QRIS harus Rp500–Rp10.000.000; periksa juga pesan dan URL gambar.');
         }
 
         $validated = $validator->validated();
