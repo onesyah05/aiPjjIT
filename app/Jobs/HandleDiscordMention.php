@@ -68,8 +68,8 @@ class HandleDiscordMention implements ShouldQueue
             $dummyUser = User::first() ?? new User(['id' => 1]);
             $dummyConversation = new Conversation(['course_id' => null, 'user_id' => $dummyUser->id]);
 
-            // Retrieve more chunks (15 instead of 5) because Discord searches globally across ALL courses.
-            $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question, 15);
+            // We retrieve 5 chunks, matching the Web UI exactly.
+            $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question, 5);
 
             // Copying Web Chat AI exactly: we pass a clean conversation context
             // so the AI doesn't get confused by past rejections in the channel history.
