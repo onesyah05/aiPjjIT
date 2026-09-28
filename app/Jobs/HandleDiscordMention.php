@@ -2,19 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Models\AiCredential;
 use App\Models\Conversation;
+use App\Models\DiscordAccount;
 use App\Models\DiscordBotConversation;
 use App\Models\User;
-use App\Services\AI\GeminiService;
-use App\Services\CredentialPoolService;
-use App\Services\Knowledge\KnowledgeLinkExtractor;
-use App\Services\Knowledge\RetrievalService;
-use App\Services\PromptBuilderService;
+use App\Services\Chat\ChatService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -35,13 +29,8 @@ class HandleDiscordMention implements ShouldQueue
         public readonly string $question,
     ) {}
 
-    public function handle(
-        GeminiService $gemini,
-        CredentialPoolService $credentialPool,
-        PromptBuilderService $promptBuilder,
-        RetrievalService $retrievalService,
-        KnowledgeLinkExtractor $linkExtractor,
-    ): void {
+    public function handle(ChatService $chatService): void
+    {
         if (DiscordBotConversation::where('discord_message_id', $this->messageId)->exists()) {
             return;
         }
@@ -63,59 +52,33 @@ class HandleDiscordMention implements ShouldQueue
         $startedAt = hrtime(true);
 
         try {
-            $systemUser = User::query()
+            $user = DiscordAccount::query()
+                ->with('user')
+                ->where('discord_user_id', $this->userId)
+                ->first()?->user;
+            $user ??= User::query()
                 ->where('email', 'discord-bot@pjj.ai')
                 ->first() ?? User::query()->oldest('id')->firstOrFail();
-            $conversation = new Conversation(['course_id' => null, 'user_id' => $systemUser->id]);
-            $retrieved = $retrievalService->retrieve($systemUser, $conversation, $this->question);
-            $sourceLinks = $linkExtractor->extractFromResults($retrieved->all(), $this->question);
-
-            $prompt = $promptBuilder->build(
-                $this->question,
-                $retrieved->map(fn (array $r): array => [
-                    'content' => $r['content'],
-                    'score' => $r['score'],
-                    'links' => $linkExtractor->extract($r['chunk']->version?->content ?? $r['content']),
-                ])->all(),
-                'general',
-                [],
-            );
-
-            Log::info('DISCORD_PROMPT_DEBUG', [
-                'channel' => $this->channelId,
-                'retrieved_count' => $retrieved->count(),
-                'prompt_length' => strlen($prompt),
-                'prompt' => $prompt,
+            $conversation = Conversation::query()->create([
+                'user_id' => $user->id,
+                'mode' => 'general',
+                'status' => 'active',
+                'title' => '[Discord] '.mb_substr($this->question, 0, 70),
             ]);
+            $answer = '';
 
-            $credentials = $credentialPool->getAvailableCredentials(
-                (int) config('services.gemini.max_attempts', 6),
-            );
+            foreach ($chatService->stream($conversation, $this->question, "discord:{$this->messageId}") as $event) {
+                $answer .= (string) ($event['content'] ?? '');
 
-            if ($credentials->isEmpty()) {
-                $record->update(['status' => 'failed', 'error_code' => 'credentials_unavailable']);
-                $msg = '⚠️ Semua credential AI sedang tidak tersedia. Coba lagi nanti.';
-                $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
-
-                return;
-            }
-
-            $answer = $this->tryGenerateAnswer($gemini, $credentialPool, $credentials, $prompt, function (string $partial) use ($placeholderId, &$lastEditTime) {
-                if ($placeholderId && microtime(true) - $lastEditTime > 1.5) {
-                    $this->editDiscordMessage($placeholderId, mb_substr("<@{$this->userId}>\n\n".$partial, 0, 1950).' ⏳');
+                if ($placeholderId && $answer !== '' && microtime(true) - $lastEditTime > 1.5) {
+                    $this->editDiscordMessage($placeholderId, mb_substr("<@{$this->userId}>\n\n".$answer, 0, 1950).' ⏳');
                     $lastEditTime = microtime(true);
                 }
-            });
-
-            if ($answer === null) {
-                $record->update(['status' => 'failed', 'error_code' => 'generation_failed']);
-                $msg = '⚠️ Gagal mendapatkan jawaban dari AI. Silakan coba lagi.';
-                $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
-
-                return;
             }
 
-            $answer .= $linkExtractor->appendixFor($answer, $sourceLinks);
+            if ($answer === '') {
+                throw new \RuntimeException('Web chat service returned an empty answer.');
+            }
 
             $latency = (int) round((hrtime(true) - $startedAt) / 1_000_000);
             $record->update(['status' => 'completed', 'answer' => $answer, 'latency_ms' => $latency]);
@@ -148,53 +111,6 @@ class HandleDiscordMention implements ShouldQueue
             $msg = '⚠️ Terjadi kesalahan saat memproses pertanyaanmu. Coba lagi nanti.';
             isset($placeholderId) && $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
         }
-    }
-
-    /**
-     * @param  Collection<int, AiCredential>  $credentials
-     */
-    private function tryGenerateAnswer(
-        GeminiService $gemini,
-        CredentialPoolService $credentialPool,
-        Collection $credentials,
-        string $prompt,
-        ?callable $onProgress = null,
-    ): ?string {
-        foreach ($credentials as $credential) {
-            $credentialPool->recordAttempt($credential);
-
-            try {
-                $content = '';
-                foreach ($gemini->stream($credential->encrypted_secret, $prompt) as $chunk) {
-                    $content .= $chunk;
-                    if ($onProgress) {
-                        $onProgress($content);
-                    }
-                }
-
-                if ($content !== '') {
-                    $credentialPool->recordSuccess($credential);
-
-                    return $content;
-                }
-            } catch (RequestException $e) {
-                $status = $e->response->status();
-                $errorCode = $status === 429 ? 'rate_limited' : "http_{$status}";
-                $credentialPool->recordFailure($credential, $errorCode);
-
-                if ($status === 429) {
-                    $credentialPool->markRateLimitHit($credential);
-                } elseif ($status === 503) {
-                    $credential->update(['cooldown_until' => now()->addSeconds(30), 'last_error_code' => 'http_503']);
-                } elseif (in_array($status, [401, 403], true)) {
-                    $credentialPool->markInvalid($credential, $errorCode, 'Credential ditolak Gemini.');
-                }
-            } catch (Throwable) {
-                $credentialPool->recordFailure($credential, 'provider_error');
-            }
-        }
-
-        return null;
     }
 
     private function sendTyping(): void

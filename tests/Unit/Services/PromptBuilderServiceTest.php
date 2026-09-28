@@ -20,6 +20,8 @@ class PromptBuilderServiceTest extends TestCase
 
         $this->assertStringContainsString('Tautan sumber:', $prompt);
         $this->assertStringContainsString('https://laravel.com/docs/13.x', $prompt);
+        $this->assertStringContainsString('rangkum seluruh fakta relevan dari semua SUMBER', $prompt);
+        $this->assertStringContainsString('bukti gambar atau lampiran', $prompt);
         $this->assertStringContainsString('Jangan membuat, menebak, atau mengubah URL.', $prompt);
     }
 }
