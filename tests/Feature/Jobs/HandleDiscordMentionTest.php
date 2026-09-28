@@ -74,6 +74,110 @@ MARKDOWN;
             && ($request['content'] ?? null) === 'https://cdn.discordapp.com/aik-schedule.png');
     }
 
+    public function test_retries_a_message_with_an_existing_failed_record(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://discord.com/api/v10/channels/channel-1/typing' => Http::response(status: 204),
+            'https://discord.com/api/v10/channels/channel-1/messages/placeholder-1' => Http::response(),
+            'https://discord.com/api/v10/channels/channel-1/messages' => Http::response(['id' => 'placeholder-1']),
+        ]);
+        config()->set('services.discord.bot_token', 'discord-test-token');
+        $user = User::factory()->create(['email' => 'discord-bot@pjj.ai']);
+        DiscordBotConversation::query()->create([
+            'discord_channel_id' => 'channel-1',
+            'discord_user_id' => 'user-1',
+            'discord_message_id' => 'message-1',
+            'discord_username' => 'student',
+            'question' => 'info group AIK',
+            'status' => 'failed',
+            'error_code' => 'exception',
+        ]);
+        $chatService = Mockery::mock(ChatService::class);
+        $chatService->shouldReceive('stream')
+            ->once()
+            ->withArgs(fn (Conversation $conversation): bool => $conversation->user_id === $user->id)
+            ->andReturn($this->streamingResponse('Jawaban terbaru dari web chat.'));
+        $job = new HandleDiscordMention(
+            channelId: 'channel-1',
+            messageId: 'message-1',
+            userId: 'user-1',
+            username: 'student',
+            question: 'info group AIK',
+        );
+
+        $job->handle($chatService);
+
+        $discordConversation = DiscordBotConversation::query()->sole();
+        $this->assertSame('completed', $discordConversation->status);
+        $this->assertSame('Jawaban terbaru dari web chat.', $discordConversation->answer);
+        $this->assertNull($discordConversation->error_code);
+    }
+
+    public function test_posts_the_answer_when_the_placeholder_cannot_be_edited(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://discord.com/api/v10/channels/channel-1/typing' => Http::response(status: 204),
+            'https://discord.com/api/v10/channels/channel-1/messages/placeholder-1' => Http::response(status: 500),
+            'https://discord.com/api/v10/channels/channel-1/messages' => Http::sequence()
+                ->push(['id' => 'placeholder-1'])
+                ->push(['id' => 'answer-1']),
+        ]);
+        config()->set('services.discord.bot_token', 'discord-test-token');
+        User::factory()->create(['email' => 'discord-bot@pjj.ai']);
+        $chatService = Mockery::mock(ChatService::class);
+        $chatService->shouldReceive('stream')
+            ->once()
+            ->andReturn($this->streamingResponse('Jawaban tetap terkirim.'));
+        $job = new HandleDiscordMention(
+            channelId: 'channel-1',
+            messageId: 'message-1',
+            userId: 'user-1',
+            username: 'student',
+            question: 'info group AIK',
+        );
+
+        $job->handle($chatService);
+
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'POST'
+            && ($request['content'] ?? null) === '<@user-1>'."\n\n".'Jawaban tetap terkirim.');
+    }
+
+    public function test_marks_the_record_failed_and_rethrows_the_exception_for_a_queue_retry(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://discord.com/api/v10/channels/channel-1/typing' => Http::response(status: 204),
+            'https://discord.com/api/v10/channels/channel-1/messages/placeholder-1' => Http::response(),
+            'https://discord.com/api/v10/channels/channel-1/messages' => Http::response(['id' => 'placeholder-1']),
+        ]);
+        config()->set('services.discord.bot_token', 'discord-test-token');
+        User::factory()->create(['email' => 'discord-bot@pjj.ai']);
+        $chatService = Mockery::mock(ChatService::class);
+        $chatService->shouldReceive('stream')
+            ->once()
+            ->andThrow(new \RuntimeException('AI provider unavailable'));
+        $job = new HandleDiscordMention(
+            channelId: 'channel-1',
+            messageId: 'message-1',
+            userId: 'user-1',
+            username: 'student',
+            question: 'info group AIK',
+        );
+
+        try {
+            $job->handle($chatService);
+            $this->fail('The failed Discord job did not rethrow its exception.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('AI provider unavailable', $exception->getMessage());
+        }
+
+        $discordConversation = DiscordBotConversation::query()->sole();
+        $this->assertSame('failed', $discordConversation->status);
+        $this->assertSame('exception', $discordConversation->error_code);
+    }
+
     /** @return Generator<int, array{content: string}> */
     private function streamingResponse(string $content): Generator
     {

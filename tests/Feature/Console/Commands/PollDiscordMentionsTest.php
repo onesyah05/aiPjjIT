@@ -38,6 +38,7 @@ class PollDiscordMentionsTest extends TestCase
         $this->artisan('discord:poll-mentions')->assertSuccessful();
 
         Queue::assertPushed(HandleDiscordMention::class, fn (HandleDiscordMention $job): bool => $job->connection !== 'sync'
+            && $job->queue === 'discord'
             && $job->channelId === 'channel-1'
             && $job->messageId === 'message-1'
             && $job->question === 'info gorup AIK dong');

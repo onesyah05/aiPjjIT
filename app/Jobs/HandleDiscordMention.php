@@ -27,22 +27,32 @@ class HandleDiscordMention implements ShouldQueue
         public readonly string $userId,
         public readonly string $username,
         public readonly string $question,
-    ) {}
+    ) {
+        $this->onQueue('discord');
+    }
 
     public function handle(ChatService $chatService): void
     {
-        if (DiscordBotConversation::where('discord_message_id', $this->messageId)->exists()) {
+        $record = DiscordBotConversation::query()
+            ->where('discord_message_id', $this->messageId)
+            ->first();
+
+        if ($record?->status === 'completed') {
             return;
         }
 
-        $record = DiscordBotConversation::create([
+        $record ??= new DiscordBotConversation;
+        $record->fill([
             'discord_channel_id' => $this->channelId,
             'discord_user_id' => $this->userId,
             'discord_message_id' => $this->messageId,
             'discord_username' => $this->username,
             'question' => $this->question,
+            'answer' => null,
             'status' => 'pending',
-        ]);
+            'error_code' => null,
+            'latency_ms' => null,
+        ])->save();
 
         $this->sendTyping();
 
@@ -91,8 +101,7 @@ class HandleDiscordMention implements ShouldQueue
 
             $textChunks = mb_str_split($fullReply, 1950);
 
-            if ($placeholderId) {
-                $this->editDiscordMessage($placeholderId, $textChunks[0]);
+            if ($placeholderId && $this->editDiscordMessage($placeholderId, $textChunks[0])) {
                 unset($textChunks[0]);
             }
 
@@ -110,6 +119,8 @@ class HandleDiscordMention implements ShouldQueue
             $record->update(['status' => 'failed', 'error_code' => 'exception']);
             $msg = '⚠️ Terjadi kesalahan saat memproses pertanyaanmu. Coba lagi nanti.';
             isset($placeholderId) && $placeholderId ? $this->editDiscordMessage($placeholderId, $msg) : $this->replyToDiscord($msg);
+
+            throw $e;
         }
     }
 
@@ -131,21 +142,29 @@ class HandleDiscordMention implements ShouldQueue
             ->post("https://discord.com/api/v10/channels/{$this->channelId}/messages", [
                 'content' => $content,
                 'message_reference' => ['message_id' => $this->messageId],
-            ]);
+            ])
+            ->throw();
 
         return $response->json('id');
     }
 
-    private function editDiscordMessage(string $msgId, string $content): void
+    private function editDiscordMessage(string $msgId, string $content): bool
     {
         $token = config('services.discord.bot_token');
+
         try {
-            Http::withHeaders(['Authorization' => "Bot {$token}"])
+            return Http::withHeaders(['Authorization' => "Bot {$token}"])
                 ->patch("https://discord.com/api/v10/channels/{$this->channelId}/messages/{$msgId}", [
                     'content' => $content,
-                ]);
-        } catch (Throwable) {
-            // A failed progress edit must not fail the completed answer.
+                ])
+                ->successful();
+        } catch (Throwable $exception) {
+            Log::warning('Discord message edit failed', [
+                'message_id' => $msgId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
         }
     }
 }

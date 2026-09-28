@@ -28,7 +28,8 @@ class DiscordWebhookControllerTest extends TestCase
         ]);
 
         $response->assertOk()->assertJson(['ok' => true]);
-        Queue::assertPushed(HandleDiscordMention::class, fn (HandleDiscordMention $job): bool => $job->channelId === 'active-channel'
+        Queue::assertPushed(HandleDiscordMention::class, fn (HandleDiscordMention $job): bool => $job->queue === 'discord'
+            && $job->channelId === 'active-channel'
             && $job->messageId === 'message-123'
             && $job->userId === 'student-123'
             && $job->question === 'info group AIK');
