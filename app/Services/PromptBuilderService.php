@@ -46,7 +46,7 @@ class PromptBuilderService
 
         $knowledgeOnlyInstruction = $mode === 'knowledge_only'
             ? 'Jawab hanya dari SUMBER. Jika tidak cukup, jawab persis: "Informasi tersebut belum ditemukan pada knowledge yang tersedia."'
-            : 'Fokus menjawab pertanyaan terkait perkuliahan, materi kampus, atau ruang lingkup PJJ Informatika. Anda BOLEH merespons sapaan ramah, basa-basi singkat, atau memberikan info waktu saat ini. Tolak dengan sopan jika topik sudah benar-benar melenceng. Selalu utamakan informasi dari SUMBER.';
+            : 'Fokus menjawab pertanyaan terkait perkuliahan, materi kampus, atau ruang lingkup PJJ Informatika. PENTING: Anda WAJIB menjawab jika user bertanya tentang hari, tanggal, atau waktu saat ini berdasarkan data <WAKTU_SEKARANG>. DILARANG KERAS menolak pertanyaan seputar waktu/tanggal. Anda juga boleh merespons sapaan ramah. Tolak dengan sopan HANYA jika topik sudah benar-benar melenceng jauh.';
 
         $timeContext = $this->buildTimeContext();
 
