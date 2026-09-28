@@ -105,7 +105,7 @@ class DiscordDonationLeaderboard
 
     private function discord(): PendingRequest
     {
-        return Http::withToken((string) config('services.discord.bot_token'))->acceptJson()->connectTimeout(5)->timeout(15);
+        return Http::withToken((string) config('services.discord.bot_token'), 'Bot')->acceptJson()->connectTimeout(5)->timeout(15);
     }
 
     private function messageUrl(string $channelId): string

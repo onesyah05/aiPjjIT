@@ -52,6 +52,7 @@ class PublishDonationLeaderboardTest extends TestCase
         $this->assertSame('Rp50.000', $payload['embeds'][0]['fields'][0]['value']);
         $this->assertStringContainsString('Semangat belajar!', $payload['embeds'][0]['fields'][3]['value']);
         $this->assertSame('https://example.com/image.gif', $payload['embeds'][0]['image']['url']);
+        Http::assertSent(fn ($request) => $request->hasHeader('Authorization', 'Bot test-token'));
         Http::assertSentCount(2);
     }
 }
