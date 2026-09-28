@@ -17,9 +17,16 @@ class HandleDiscordMention implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 3;
+    public int $tries = 4;
 
     public int $timeout = 60;
+
+    /** @return array<int, int> */
+    public function backoff(): array
+    {
+        // Gemini overload (HTTP 503) spikes are usually temporary; wait them out.
+        return [30, 60, 120];
+    }
 
     public function __construct(
         public readonly string $channelId,
