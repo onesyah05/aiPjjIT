@@ -87,6 +87,55 @@ class KnowledgeRetrievalTest extends TestCase
         $this->assertCount(0, $results);
     }
 
+    public function test_keyword_retrieval_recovers_a_group_typo_and_prioritizes_the_whatsapp_link(): void
+    {
+        config()->set('services.qdrant.enabled', false);
+        $user = User::factory()->create();
+        $conversation = Conversation::query()->create([
+            'user_id' => $user->id,
+            'mode' => 'general',
+            'status' => 'active',
+        ]);
+
+        foreach (range(1, 5) as $index) {
+            $knowledge = Knowledge::query()->create([
+                'user_id' => $user->id,
+                'title' => "Diskusi AIK {$index}",
+                'visibility' => 'community',
+                'status' => 'approved',
+            ]);
+            $version = $this->createVersion(
+                $knowledge,
+                1,
+                'approved',
+                'ready',
+                "Informasi AIK terbaru sedang diverifikasi bagian {$index}.",
+            );
+            $knowledge->update(['active_version_id' => $version->id]);
+        }
+
+        $groupKnowledge = Knowledge::query()->create([
+            'user_id' => $user->id,
+            'title' => 'Grup Mata Kuliah',
+            'visibility' => 'community',
+            'status' => 'approved',
+        ]);
+        $groupVersion = $this->createVersion(
+            $groupKnowledge,
+            1,
+            'approved',
+            'ready',
+            'AIK 1 MUSLIM FTIK - PAK CHUSNUL: https://chat.whatsapp.com/valid-aik-link',
+        );
+        $groupKnowledge->update(['active_version_id' => $groupVersion->id]);
+
+        $results = app(RetrievalService::class)->retrieve($user, $conversation, 'info gorup AIK dong');
+
+        $this->assertCount(5, $results);
+        $this->assertSame($groupVersion->chunks()->sole()->id, $results->first()['chunk']->id);
+        $this->assertStringContainsString('https://chat.whatsapp.com/valid-aik-link', $results->first()['content']);
+    }
+
     private function createVersion(
         Knowledge $knowledge,
         int $versionNumber,

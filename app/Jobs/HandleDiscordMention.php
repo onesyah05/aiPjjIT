@@ -42,7 +42,6 @@ class HandleDiscordMention implements ShouldQueue
         RetrievalService $retrievalService,
         KnowledgeLinkExtractor $linkExtractor,
     ): void {
-        // Idempotency: skip if already processed
         if (DiscordBotConversation::where('discord_message_id', $this->messageId)->exists()) {
             return;
         }
@@ -56,7 +55,6 @@ class HandleDiscordMention implements ShouldQueue
             'status' => 'pending',
         ]);
 
-        // Typing indicator
         $this->sendTyping();
 
         $placeholderId = $this->replyToDiscord('Memproses jawaban... ⏳');
@@ -65,14 +63,12 @@ class HandleDiscordMention implements ShouldQueue
         $startedAt = hrtime(true);
 
         try {
-            $dummyUser = User::first() ?? new User(['id' => 1]);
-            $dummyConversation = new Conversation(['course_id' => null, 'user_id' => $dummyUser->id]);
-
-            // We retrieve 5 chunks, matching the Web UI exactly.
-            $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question, 5);
-
-            // Copying Web Chat AI exactly: we pass a clean conversation context
-            // so the AI doesn't get confused by past rejections in the channel history.
+            $systemUser = User::query()
+                ->where('email', 'discord-bot@pjj.ai')
+                ->first() ?? User::query()->oldest('id')->firstOrFail();
+            $conversation = new Conversation(['course_id' => null, 'user_id' => $systemUser->id]);
+            $retrieved = $retrievalService->retrieve($systemUser, $conversation, $this->question);
+            $sourceLinks = $linkExtractor->extractFromResults($retrieved->all());
 
             $prompt = $promptBuilder->build(
                 $this->question,
@@ -119,19 +115,17 @@ class HandleDiscordMention implements ShouldQueue
                 return;
             }
 
+            $answer .= $linkExtractor->appendixFor($answer, $sourceLinks);
+
             $latency = (int) round((hrtime(true) - $startedAt) / 1_000_000);
             $record->update(['status' => 'completed', 'answer' => $answer, 'latency_ms' => $latency]);
 
-            // 1. Extract images: ![alt](url)
             preg_match_all('/!\[([^\]]*)\]\(([^)]+)\)/', $answer, $imageMatches, PREG_SET_ORDER);
 
-            // 2. Remove images from main text
             $textWithoutImages = trim(preg_replace('/!\[([^\]]*)\]\(([^)]+)\)/', '', $answer));
 
-            // 3. Prepend mention
             $fullReply = "<@{$this->userId}>\n\n".$textWithoutImages;
 
-            // 4. Split message if it's too long (> 1950 chars)
             $textChunks = mb_str_split($fullReply, 1950);
 
             if ($placeholderId) {
@@ -143,7 +137,6 @@ class HandleDiscordMention implements ShouldQueue
                 $this->replyToDiscord($chunk);
             }
 
-            // 5. Send images separately
             foreach ($imageMatches as $match) {
                 $imageUrl = $match[2];
                 $this->replyToDiscord($imageUrl);
@@ -210,7 +203,7 @@ class HandleDiscordMention implements ShouldQueue
             Http::withHeaders(['Authorization' => 'Bot '.config('services.discord.bot_token')])
                 ->post("https://discord.com/api/v10/channels/{$this->channelId}/typing");
         } catch (Throwable) {
-            // Non-critical — ignore
+            // Discord typing failures must not stop answer generation.
         }
     }
 
@@ -236,7 +229,7 @@ class HandleDiscordMention implements ShouldQueue
                     'content' => $content,
                 ]);
         } catch (Throwable) {
-            // Ignore edit failures
+            // A failed progress edit must not fail the completed answer.
         }
     }
 }

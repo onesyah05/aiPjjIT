@@ -2,10 +2,27 @@
 
 namespace App\Services\Knowledge;
 
+use App\Models\KnowledgeChunk;
 use Illuminate\Support\Str;
 
 class KnowledgeLinkExtractor
 {
+    /**
+     * @param  array<int, array{chunk: KnowledgeChunk, content: string, score: float}>  $retrieved
+     * @return array<int, array{url: string, label: string}>
+     */
+    public function extractFromResults(array $retrieved): array
+    {
+        return collect($retrieved)
+            ->flatMap(fn (array $result): array => $this->extract(
+                $result['chunk']->version?->content ?? $result['content'],
+            ))
+            ->unique('url')
+            ->take(8)
+            ->values()
+            ->all();
+    }
+
     /**
      * @return array<int, array{url: string, label: string}>
      */

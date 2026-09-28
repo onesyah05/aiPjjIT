@@ -120,7 +120,7 @@ class PollDiscordMentions extends Command
 
             $this->info("[{$username}] → ".mb_substr($question, 0, 80));
 
-            HandleDiscordMention::dispatchSync(
+            HandleDiscordMention::dispatch(
                 channelId: $channelId,
                 messageId: $messageId,
                 userId: $authorId,

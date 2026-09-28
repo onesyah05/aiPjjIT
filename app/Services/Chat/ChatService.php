@@ -64,7 +64,7 @@ class ChatService
         ]);
 
         $retrieved = $this->retrievalService->retrieve($conversation->user, $conversation, $content);
-        $sourceLinks = $this->sourceLinks($retrieved->all());
+        $sourceLinks = $this->knowledgeLinkExtractor->extractFromResults($retrieved->all());
         $assistant = $conversation->messages()->create([
             'role' => 'assistant',
             'content' => '',
@@ -267,21 +267,5 @@ class ChatService
                 $source->chunk?->version?->content ?? $source->chunk?->content ?? '',
             ),
         ])->all();
-    }
-
-    /**
-     * @param  array<int, array{chunk: mixed, content: string, score: float}>  $retrieved
-     * @return array<int, array{url: string, label: string}>
-     */
-    private function sourceLinks(array $retrieved): array
-    {
-        return collect($retrieved)
-            ->flatMap(fn (array $result): array => $this->knowledgeLinkExtractor->extract(
-                $result['chunk']->version?->content ?? $result['content'],
-            ))
-            ->unique('url')
-            ->take(8)
-            ->values()
-            ->all();
     }
 }

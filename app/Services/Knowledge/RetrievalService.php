@@ -16,6 +16,30 @@ use Throwable;
 
 class RetrievalService
 {
+    /** @var array<string, array<int, string>> */
+    private const TERM_ALIASES = [
+        'gorup' => ['gorup', 'grup', 'group'],
+        'group' => ['group', 'grup'],
+        'gruop' => ['gruop', 'grup', 'group'],
+        'grup' => ['grup', 'group'],
+        'link' => ['link', 'tautan'],
+        'tautan' => ['tautan', 'link'],
+        'wa' => ['whatsapp', 'chat.whatsapp.com'],
+        'whatapp' => ['whatapp', 'whatsapp', 'chat.whatsapp.com'],
+        'whatsap' => ['whatsap', 'whatsapp', 'chat.whatsapp.com'],
+        'whatsapp' => ['whatsapp', 'chat.whatsapp.com'],
+    ];
+
+    /** @var array<int, string> */
+    private const CONVERSATIONAL_TERMS = [
+        'aku',
+        'dong',
+        'mohon',
+        'please',
+        'saya',
+        'tolong',
+    ];
+
     public function __construct(
         private EmbeddingService $embedding,
         private QdrantService $qdrant,
@@ -25,13 +49,12 @@ class RetrievalService
     /** @return Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}> */
     public function retrieve(User $user, Conversation $conversation, string $question, int $limit = 5): Collection
     {
-        $vectorResults = $this->retrieveFromVectorStore($user, $conversation, $question, $limit);
+        $candidateLimit = max($limit * 4, 20);
+        $vectorResults = $this->retrieveFromVectorStore($user, $conversation, $question, $candidateLimit);
+        $keywordResults = $this->retrieveByKeywords($user, $conversation, $question, $candidateLimit);
+        $prioritizeWhatsAppLinks = $this->asksForLink($this->keywordTermGroups($question));
 
-        if ($vectorResults->isNotEmpty()) {
-            return $vectorResults;
-        }
-
-        return $this->retrieveByKeywords($user, $conversation, $question, $limit);
+        return $this->mergeResults($vectorResults, $keywordResults, $limit, $prioritizeWhatsAppLinks);
     }
 
     /** @return Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}> */
@@ -86,38 +109,142 @@ class RetrievalService
     /** @return Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}> */
     private function retrieveByKeywords(User $user, Conversation $conversation, string $question, int $limit): Collection
     {
-        $terms = collect(preg_split('/[^\pL\pN]+/u', Str::lower($question)) ?: [])
-            ->filter(fn (string $term): bool => mb_strlen($term) >= 3)
-            ->unique()
-            ->values();
+        $termGroups = $this->keywordTermGroups($question);
 
-        if ($terms->isEmpty()) {
+        if ($termGroups->isEmpty()) {
             return collect();
         }
 
         $query = $this->accessibleChunks($user, $conversation);
+        $searchTerms = $termGroups->flatten()->unique()->values();
+        $prioritizeWhatsAppLinks = $this->asksForLink($termGroups);
 
-        $query->where(function ($q) use ($terms): void {
-            foreach ($terms as $term) {
+        $query->where(function ($q) use ($searchTerms): void {
+            foreach ($searchTerms as $term) {
                 $q->orWhere('knowledge_chunks.content', 'like', '%'.$term.'%');
             }
         });
 
-        return $query->limit(200)
+        return $query
+            ->orderByDesc('knowledge_versions.id')
+            ->orderByDesc('knowledge_chunks.id')
+            ->limit(200)
             ->get()
-            ->map(function (KnowledgeChunk $chunk) use ($terms): array {
+            ->map(function (KnowledgeChunk $chunk) use ($prioritizeWhatsAppLinks, $termGroups): array {
                 $content = Str::lower($chunk->content);
-                $matches = $terms->filter(fn (string $term): bool => str_contains($content, $term))->count();
+                $matches = $termGroups
+                    ->filter(fn (Collection $aliases): bool => $aliases->contains(
+                        fn (string $alias): bool => str_contains($content, $alias),
+                    ))
+                    ->count();
+                $score = $matches / $termGroups->count();
+
+                if ($prioritizeWhatsAppLinks && str_contains($content, 'chat.whatsapp.com')) {
+                    $score = min(1.0, $score + 0.5);
+                }
 
                 return [
                     'chunk' => $chunk,
                     'content' => $chunk->content,
-                    'score' => $matches / $terms->count(),
+                    'score' => $score,
                 ];
             })->filter(fn (array $result): bool => $result['score'] > 0)
-            ->sortByDesc('score')
+            ->sort(function (array $left, array $right) use ($prioritizeWhatsAppLinks): int {
+                $scoreComparison = $right['score'] <=> $left['score'];
+
+                if ($scoreComparison !== 0) {
+                    return $scoreComparison;
+                }
+
+                if ($prioritizeWhatsAppLinks) {
+                    $linkComparison = str_contains($right['content'], 'chat.whatsapp.com')
+                        <=> str_contains($left['content'], 'chat.whatsapp.com');
+
+                    if ($linkComparison !== 0) {
+                        return $linkComparison;
+                    }
+                }
+
+                $versionComparison = $right['chunk']->knowledge_version_id <=> $left['chunk']->knowledge_version_id;
+
+                return $versionComparison !== 0
+                    ? $versionComparison
+                    : $right['chunk']->id <=> $left['chunk']->id;
+            })
             ->take($limit)
             ->values();
+    }
+
+    /**
+     * @param  Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}>  $vectorResults
+     * @param  Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}>  $keywordResults
+     * @return Collection<int, array{chunk: KnowledgeChunk, content: string, score: float}>
+     */
+    private function mergeResults(
+        Collection $vectorResults,
+        Collection $keywordResults,
+        int $limit,
+        bool $prioritizeWhatsAppLinks,
+    ): Collection {
+        return $vectorResults
+            ->concat($keywordResults)
+            ->groupBy(fn (array $result): int => $result['chunk']->id)
+            ->map(function (Collection $matches): array {
+                $result = $matches->first();
+                $result['score'] = (float) $matches->max('score');
+
+                return $result;
+            })
+            ->sort(function (array $left, array $right) use ($prioritizeWhatsAppLinks): int {
+                $scoreComparison = $right['score'] <=> $left['score'];
+
+                if ($scoreComparison !== 0) {
+                    return $scoreComparison;
+                }
+
+                if ($prioritizeWhatsAppLinks) {
+                    $linkComparison = str_contains($right['content'], 'chat.whatsapp.com')
+                        <=> str_contains($left['content'], 'chat.whatsapp.com');
+
+                    if ($linkComparison !== 0) {
+                        return $linkComparison;
+                    }
+                }
+
+                $versionComparison = $right['chunk']->knowledge_version_id <=> $left['chunk']->knowledge_version_id;
+
+                return $versionComparison !== 0
+                    ? $versionComparison
+                    : $right['chunk']->id <=> $left['chunk']->id;
+            })
+            ->take($limit)
+            ->values();
+    }
+
+    /** @return Collection<int, Collection<int, string>> */
+    private function keywordTermGroups(string $question): Collection
+    {
+        return collect(preg_split('/[^\pL\pN.]+/u', Str::lower($question)) ?: [])
+            ->filter(fn (string $term): bool => mb_strlen($term) >= 3 || $term === 'wa')
+            ->reject(fn (string $term): bool => in_array($term, self::CONVERSATIONAL_TERMS, true))
+            ->unique()
+            ->map(fn (string $term): Collection => collect(self::TERM_ALIASES[$term] ?? [$term])->unique()->values())
+            ->values();
+    }
+
+    /** @param Collection<int, Collection<int, string>> $termGroups */
+    private function asksForLink(Collection $termGroups): bool
+    {
+        return $termGroups
+            ->flatten()
+            ->contains(fn (string $term): bool => in_array($term, [
+                'chat.whatsapp.com',
+                'group',
+                'grup',
+                'link',
+                'tautan',
+                'whatsapp',
+            ], true));
     }
 
     private function accessibleChunks(User $user, Conversation $conversation): Builder
