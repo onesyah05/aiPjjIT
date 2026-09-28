@@ -70,6 +70,21 @@ class HandleDiscordMention implements ShouldQueue
 
             $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question);
 
+            // Fetch recent conversation history for this channel to give Gemini context
+            $recentHistory = DiscordBotConversation::query()
+                ->where('discord_channel_id', $this->channelId)
+                ->where('status', 'completed')
+                ->where('id', '<', $record->id)
+                ->latest('id')
+                ->limit(6)
+                ->get()
+                ->reverse()
+                ->flatMap(fn (DiscordBotConversation $conv): array => [
+                    ['role' => 'user', 'content' => $conv->question],
+                    ['role' => 'assistant', 'content' => $conv->answer ?? ''],
+                ])
+                ->toArray();
+
             $prompt = $promptBuilder->build(
                 $this->question,
                 $retrieved->map(fn (array $r): array => [
@@ -78,7 +93,7 @@ class HandleDiscordMention implements ShouldQueue
                     'links' => $linkExtractor->extract($r['chunk']->version?->content ?? $r['content']),
                 ])->all(),
                 'general',
-                [],
+                $recentHistory,
             );
 
             $credentials = $credentialPool->getAvailableCredentials(
