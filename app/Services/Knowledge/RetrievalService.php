@@ -95,8 +95,15 @@ class RetrievalService
             return collect();
         }
 
-        return $this->accessibleChunks($user, $conversation)
-            ->limit(200)
+        $query = $this->accessibleChunks($user, $conversation);
+
+        $query->where(function ($q) use ($terms): void {
+            foreach ($terms as $term) {
+                $q->orWhere('knowledge_chunks.content', 'like', '%'.$term.'%');
+            }
+        });
+
+        return $query->limit(200)
             ->get()
             ->map(function (KnowledgeChunk $chunk) use ($terms): array {
                 $content = Str::lower($chunk->content);

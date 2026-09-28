@@ -1,0 +1,300 @@
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing deta (truncated...)
+ {"exception":"[object] (Illuminate\\Http\\Client\\RequestException(code: 429): HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+ at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Http/Client/Response.php:340)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Http/Client/Response.php(355): Illuminate\\Http\\Client\\Response->toException()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/app/Services/AI/EmbeddingService.php(31): Illuminate\\Http\\Client\\Response->throw()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/app/Jobs/ProcessKnowledgeEmbedding.php(96): App\\Services\\AI\\EmbeddingService->embed()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Jobs\\ProcessKnowledgeEmbedding->handle()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Bus/Dispatcher.php(136): Illuminate\\Container\\Container->call()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Bus\\Dispatcher->Illuminate\\Bus\\{closure}()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Bus/Dispatcher.php(140): Illuminate\\Pipeline\\Pipeline->then()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(159): Illuminate\\Bus\\Dispatcher->dispatchNow()
+#13 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Queue\\CallQueuedHandler->Illuminate\\Queue\\{closure}()
+#14 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#15 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(148): Illuminate\\Pipeline\\Pipeline->then()
+#16 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(86): Illuminate\\Queue\\CallQueuedHandler->dispatchThroughMiddleware()
+#17 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Jobs/Job.php(102): Illuminate\\Queue\\CallQueuedHandler->call()
+#18 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(599): Illuminate\\Queue\\Jobs\\Job->fire()
+#19 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(545): Illuminate\\Queue\\Worker->process()
+#20 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(268): Illuminate\\Queue\\Worker->runJob()
+#21 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(152): Illuminate\\Queue\\Worker->daemon()
+#22 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(135): Illuminate\\Queue\\Console\\WorkCommand->runWorker()
+#23 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Queue\\Console\\WorkCommand->handle()
+#24 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#25 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()
+#26 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()
+#27 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call()
+#28 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call()
+#29 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Command/Command.php(341): Illuminate\\Console\\Command->execute()
+#30 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run()
+#31 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(1117): Illuminate\\Console\\Command->run()
+#32 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(356): Symfony\\Component\\Console\\Application->doRunCommand()
+#33 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#34 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#35 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1242): Illuminate\\Foundation\\Console\\Kernel->handle()
+#36 /www/wwwroot/pjjaiit.nalaros.my.id/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
+#37 {main}
+"} 
+[2026-09-27 05:02:56] production.WARNING: AI credential entered cooldown. {"credential_id":1} 
+[2026-09-27 05:04:54] production.ERROR: HTTP request returned status code 429:
+{
+  "error": {
+    "code": 429,
+    "message": "You exceeded your current quota, please check your plan and billing deta (truncated...)
+ {"exception":"[object] (Illuminate\\Http\\Client\\RequestException(code: 429): HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+ at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Http/Client/Response.php:340)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Http/Client/Response.php(355): Illuminate\\Http\\Client\\Response->toException()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/app/Services/AI/EmbeddingService.php(31): Illuminate\\Http\\Client\\Response->throw()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/app/Jobs/ProcessKnowledgeEmbedding.php(96): App\\Services\\AI\\EmbeddingService->embed()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Jobs\\ProcessKnowledgeEmbedding->handle()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Bus/Dispatcher.php(136): Illuminate\\Container\\Container->call()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Bus\\Dispatcher->Illuminate\\Bus\\{closure}()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Bus/Dispatcher.php(140): Illuminate\\Pipeline\\Pipeline->then()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(159): Illuminate\\Bus\\Dispatcher->dispatchNow()
+#13 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(180): Illuminate\\Queue\\CallQueuedHandler->Illuminate\\Queue\\{closure}()
+#14 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(137): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}()
+#15 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(148): Illuminate\\Pipeline\\Pipeline->then()
+#16 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/CallQueuedHandler.php(86): Illuminate\\Queue\\CallQueuedHandler->dispatchThroughMiddleware()
+#17 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Jobs/Job.php(102): Illuminate\\Queue\\CallQueuedHandler->call()
+#18 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(599): Illuminate\\Queue\\Jobs\\Job->fire()
+#19 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(545): Illuminate\\Queue\\Worker->process()
+#20 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(268): Illuminate\\Queue\\Worker->runJob()
+#21 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(152): Illuminate\\Queue\\Worker->daemon()
+#22 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(135): Illuminate\\Queue\\Console\\WorkCommand->runWorker()
+#23 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Queue\\Console\\WorkCommand->handle()
+#24 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#25 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()
+#26 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()
+#27 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call()
+#28 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call()
+#29 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Command/Command.php(341): Illuminate\\Console\\Command->execute()
+#30 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run()
+#31 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(1117): Illuminate\\Console\\Command->run()
+#32 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(356): Symfony\\Component\\Console\\Application->doRunCommand()
+#33 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#34 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#35 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1242): Illuminate\\Foundation\\Console\\Kernel->handle()
+#36 /www/wwwroot/pjjaiit.nalaros.my.id/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
+#37 {main}
+"} 
+[2026-09-27 05:35:57] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":1,"conversation_id":1,"error":"HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+"} 
+[2026-09-27 06:00:41] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 06:00:44] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.329, "global": false}  
+[2026-09-27 07:00:38] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.577, "global": false}  
+[2026-09-27 07:00:39] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.418, "global": false}  
+[2026-09-27 07:01:06] production.ERROR: Call to undefined method App\Models\Conversation::factory() {"exception":"[object] (BadMethodCallException(code: 0): Call to undefined method App\\Models\\Conversation::factory() at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php:67)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Support/Traits/ForwardsCalls.php(36): Illuminate\\Database\\Eloquent\\Model::throwBadMethodCallException()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2870): Illuminate\\Database\\Eloquent\\Model->forwardCallTo()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(2886): Illuminate\\Database\\Eloquent\\Model->__call()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/test_retrieval.php(9): Illuminate\\Database\\Eloquent\\Model::__callStatic()
+#4 {main}
+"} 
+[2026-09-27 07:02:49] production.ERROR: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'conversation_id' cannot be null (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: pjjaiit, SQL: insert into `messages` (`client_request_id`, `role`, `content`, `status`, `conversation_id`, `updated_at`, `created_at`) values (?, user, minta background untuk zoom dong, completed, ?, 2026-09-27 07:02:49, 2026-09-27 07:02:49)) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 23000): SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'conversation_id' cannot be null (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: pjjaiit, SQL: insert into `messages` (`client_request_id`, `role`, `content`, `status`, `conversation_id`, `updated_at`, `created_at`) values (?, user, minta background untuk zoom dong, completed, ?, 2026-09-27 07:02:49, 2026-09-27 07:02:49)) at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\\Database\\Connection->runQueryCallback()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\\Database\\Connection->run()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4313): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2336): Illuminate\\Database\\Query\\Builder->insertGetId()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1691): Illuminate\\Database\\Eloquent\\Builder->__call()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1607): Illuminate\\Database\\Eloquent\\Model->insertAndSetId()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1411): Illuminate\\Database\\Eloquent\\Model->performInsert()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(393): Illuminate\\Database\\Eloquent\\Model->save()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->Illuminate\\Database\\Eloquent\\Relations\\{closure}()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(390): tap()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/app/Services/Chat/ChatService.php(54): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->create()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/test_ai_response.php(14): App\\Services\\Chat\\ChatService->stream()
+#13 {main}
+
+[previous exception] [object] (PDOException(code: 23000): SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'conversation_id' cannot be null at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php:53)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(53): PDOStatement->execute()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php(846): Illuminate\\Database\\MySqlConnection->Illuminate\\Database\\{closure}()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\\Database\\Connection->runQueryCallback()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\\Database\\Connection->run()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4313): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2336): Illuminate\\Database\\Query\\Builder->insertGetId()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1691): Illuminate\\Database\\Eloquent\\Builder->__call()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1607): Illuminate\\Database\\Eloquent\\Model->insertAndSetId()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1411): Illuminate\\Database\\Eloquent\\Model->performInsert()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(393): Illuminate\\Database\\Eloquent\\Model->save()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->Illuminate\\Database\\Eloquent\\Relations\\{closure}()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(390): tap()
+#13 /www/wwwroot/pjjaiit.nalaros.my.id/app/Services/Chat/ChatService.php(54): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->create()
+#14 /www/wwwroot/pjjaiit.nalaros.my.id/test_ai_response.php(14): App\\Services\\Chat\\ChatService->stream()
+#15 {main}
+"} 
+[2026-09-27 07:03:32] production.ERROR: SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'conversation_id' cannot be null (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: pjjaiit, SQL: insert into `messages` (`client_request_id`, `role`, `content`, `status`, `conversation_id`, `updated_at`, `created_at`) values (?, user, minta background untuk zoom dong, completed, ?, 2026-09-27 07:03:31, 2026-09-27 07:03:31)) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 23000): SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'conversation_id' cannot be null (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: pjjaiit, SQL: insert into `messages` (`client_request_id`, `role`, `content`, `status`, `conversation_id`, `updated_at`, `created_at`) values (?, user, minta background untuk zoom dong, completed, ?, 2026-09-27 07:03:31, 2026-09-27 07:03:31)) at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php:857)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\\Database\\Connection->runQueryCallback()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\\Database\\Connection->run()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4313): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2336): Illuminate\\Database\\Query\\Builder->insertGetId()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1691): Illuminate\\Database\\Eloquent\\Builder->__call()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1607): Illuminate\\Database\\Eloquent\\Model->insertAndSetId()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1411): Illuminate\\Database\\Eloquent\\Model->performInsert()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(393): Illuminate\\Database\\Eloquent\\Model->save()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->Illuminate\\Database\\Eloquent\\Relations\\{closure}()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(390): tap()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/app/Services/Chat/ChatService.php(54): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->create()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/test_ai_response.php(14): App\\Services\\Chat\\ChatService->stream()
+#13 {main}
+
+[previous exception] [object] (PDOException(code: 23000): SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'conversation_id' cannot be null at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php:53)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(53): PDOStatement->execute()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php(846): Illuminate\\Database\\MySqlConnection->Illuminate\\Database\\{closure}()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Connection.php(813): Illuminate\\Database\\Connection->runQueryCallback()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/MySqlConnection.php(42): Illuminate\\Database\\Connection->run()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/MySqlProcessor.php(35): Illuminate\\Database\\MySqlConnection->insert()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php(4313): Illuminate\\Database\\Query\\Processors\\MySqlProcessor->processInsertGetId()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php(2336): Illuminate\\Database\\Query\\Builder->insertGetId()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1691): Illuminate\\Database\\Eloquent\\Builder->__call()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1607): Illuminate\\Database\\Eloquent\\Model->insertAndSetId()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php(1411): Illuminate\\Database\\Eloquent\\Model->performInsert()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(393): Illuminate\\Database\\Eloquent\\Model->save()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Support/helpers.php(393): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->Illuminate\\Database\\Eloquent\\Relations\\{closure}()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Relations/HasOneOrMany.php(390): tap()
+#13 /www/wwwroot/pjjaiit.nalaros.my.id/app/Services/Chat/ChatService.php(54): Illuminate\\Database\\Eloquent\\Relations\\HasOneOrMany->create()
+#14 /www/wwwroot/pjjaiit.nalaros.my.id/test_ai_response.php(14): App\\Services\\Chat\\ChatService->stream()
+#15 {main}
+"} 
+[2026-09-27 07:43:21] production.ERROR: Call to undefined method App\Services\AI\EmbeddingService::embedQuery() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\AI\\EmbeddingService::embedQuery() at /www/wwwroot/pjjaiit.nalaros.my.id/test_sim.php:21)
+[stacktrace]
+#0 {main}
+"} 
+[2026-09-27 08:00:48] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 08:00:48] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.349, "global": false}  
+[2026-09-27 09:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 09:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 10:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 10:00:44] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 11:00:47] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 11:00:48] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 12:00:47] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.552, "global": false}  
+[2026-09-27 12:00:48] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.321, "global": false}  
+[2026-09-27 13:00:40] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.336, "global": false}  
+[2026-09-27 13:00:40] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 14:00:40] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.385, "global": false}  
+[2026-09-27 14:00:40] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 15:00:52] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.604, "global": false}  
+[2026-09-27 15:00:52] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 16:00:42] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.485, "global": false}  
+[2026-09-27 16:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 17:00:40] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.412, "global": false}  
+[2026-09-27 17:00:40] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 18:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.816, "global": false}  
+[2026-09-27 18:00:44] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 19:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.331, "global": false}  
+[2026-09-27 19:00:44] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 20:00:42] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.447, "global": false}  
+[2026-09-27 20:00:42] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 21:00:36] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 21:00:37] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 22:00:46] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-27 22:00:47] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.383, "global": false}  
+[2026-09-27 23:00:36] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.892, "global": false}  
+[2026-09-27 23:00:36] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 00:00:49] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.725, "global": false}  
+[2026-09-28 00:00:49] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.442, "global": false}  
+[2026-09-28 01:00:43] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 01:00:44] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 02:00:41] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.731, "global": false}  
+[2026-09-28 02:00:42] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 03:00:49] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.494, "global": false}  
+[2026-09-28 03:00:49] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.406, "global": false}  
+[2026-09-28 04:00:47] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.39, "global": false}  
+[2026-09-28 04:00:47] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 04:40:56] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":1,"conversation_id":null,"error":"HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+"} 
+[2026-09-28 04:44:55] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":1,"conversation_id":null,"error":"HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+"} 
+[2026-09-28 04:45:36] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.544, "global": false}  
+[2026-09-28 04:45:36] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 04:48:10] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":8,"conversation_id":29,"error":"cURL error 28: Resolving timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2-preview:embedContent"} 
+[2026-09-28 05:00:50] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 05:00:51] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.31, "global": false}  
+[2026-09-28 05:00:51] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":1,"conversation_id":null,"error":"HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+"} 
+[2026-09-28 05:10:45] production.ERROR: App\Jobs\ProcessKnowledgeEmbedding has been attempted too many times. {"exception":"[object] (Illuminate\\Queue\\MaxAttemptsExceededException(code: 0): App\\Jobs\\ProcessKnowledgeEmbedding has been attempted too many times. at /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/MaxAttemptsExceededException.php:24)
+[stacktrace]
+#0 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(1061): Illuminate\\Queue\\MaxAttemptsExceededException::forJob()
+#1 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(697): Illuminate\\Queue\\Worker->maxAttemptsExceededException()
+#2 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(588): Illuminate\\Queue\\Worker->markJobAsFailedIfAlreadyExceedsMaxAttempts()
+#3 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(545): Illuminate\\Queue\\Worker->process()
+#4 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Worker.php(268): Illuminate\\Queue\\Worker->runJob()
+#5 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(152): Illuminate\\Queue\\Worker->daemon()
+#6 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Queue/Console/WorkCommand.php(135): Illuminate\\Queue\\Console\\WorkCommand->runWorker()
+#7 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Queue\\Console\\WorkCommand->handle()
+#8 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#9 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure()
+#10 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod()
+#11 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Container/Container.php(803): Illuminate\\Container\\BoundMethod::call()
+#12 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Console/Command.php(292): Illuminate\\Container\\Container->call()
+#13 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Command/Command.php(341): Illuminate\\Console\\Command->execute()
+#14 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Console/Command.php(261): Symfony\\Component\\Console\\Command\\Command->run()
+#15 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(1117): Illuminate\\Console\\Command->run()
+#16 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(356): Symfony\\Component\\Console\\Application->doRunCommand()
+#17 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/symfony/console/Application.php(195): Symfony\\Component\\Console\\Application->doRun()
+#18 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#19 /www/wwwroot/pjjaiit.nalaros.my.id/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1242): Illuminate\\Foundation\\Console\\Kernel->handle()
+#20 /www/wwwroot/pjjaiit.nalaros.my.id/artisan(16): Illuminate\\Foundation\\Application->handleCommand()
+#21 {main}
+"} 
+[2026-09-28 05:15:21] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":1,"conversation_id":null,"error":"HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+"} 
+[2026-09-28 05:15:41] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.445, "global": false}  
+[2026-09-28 05:15:42] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.3, "global": false}  
+[2026-09-28 05:19:23] production.WARNING: Vector retrieval unavailable; using keyword fallback. {"user_id":1,"conversation_id":1,"error":"HTTP request returned status code 429:
+{
+  \"error\": {
+    \"code\": 429,
+    \"message\": \"You exceeded your current quota, please check your plan and billing deta (truncated...)
+"} 
+[2026-09-28 05:30:33] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.97, "global": false}  
+[2026-09-28 05:30:34] production.ERROR: Failed to fetch Discord messages for channel 1542836976187609174: {"message": "You are being rate limited.", "retry_after": 0.489, "global": false}  
