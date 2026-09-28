@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\RefreshDonationLeaderboard;
 use App\Models\Donation;
-use App\Services\PakasirClient;
+use App\Services\DonationPaymentConfirmer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PakasirWebhookController extends Controller
 {
-    public function __invoke(Request $request, PakasirClient $pakasir): JsonResponse
+    public function __invoke(Request $request, DonationPaymentConfirmer $confirmer): JsonResponse
     {
         $secret = config('services.pakasir.webhook_secret');
         if (! is_string($secret) || $secret === '') {
@@ -42,32 +40,8 @@ class PakasirWebhookController extends Controller
             return response()->json(['message' => 'Transaction mismatch.'], 422);
         }
 
-        if ($donation->status === 'paid') {
-            return response()->json(['ok' => true]);
-        }
-
-        $status = $pakasir->transactionStatus((string) $input['txn_id']);
-        if (($status['status'] ?? null) !== 'completed'
-            || ($status['txn_id'] ?? null) !== $donation->pakasir_txn_id
-            || ($status['order_id'] ?? null) !== $donation->order_id
-            || ($status['amount'] ?? null) !== $donation->amount
-            || ($status['is_sandbox'] ?? null) !== $donation->is_sandbox) {
+        if (! $confirmer->confirm($donation)) {
             return response()->json(['message' => 'Payment is not confirmed.'], 409);
-        }
-
-        $wasPaid = DB::transaction(function () use ($donation): bool {
-            $locked = Donation::query()->lockForUpdate()->findOrFail($donation->id);
-            if ($locked->status === 'paid') {
-                return false;
-            }
-
-            $locked->update(['status' => 'paid', 'paid_at' => now()]);
-
-            return true;
-        });
-
-        if ($wasPaid) {
-            RefreshDonationLeaderboard::dispatch($donation->channel_id);
         }
 
         return response()->json(['ok' => true]);

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('discord:sync-knowledge')->everyFifteenMinutes();
+Schedule::command('donations:reconcile-pending')->everyMinute()->withoutOverlapping(5);
