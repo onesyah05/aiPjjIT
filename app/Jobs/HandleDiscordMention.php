@@ -68,7 +68,7 @@ class HandleDiscordMention implements ShouldQueue
                 ->first() ?? User::query()->oldest('id')->firstOrFail();
             $conversation = new Conversation(['course_id' => null, 'user_id' => $systemUser->id]);
             $retrieved = $retrievalService->retrieve($systemUser, $conversation, $this->question);
-            $sourceLinks = $linkExtractor->extractFromResults($retrieved->all());
+            $sourceLinks = $linkExtractor->extractFromResults($retrieved->all(), $this->question);
 
             $prompt = $promptBuilder->build(
                 $this->question,

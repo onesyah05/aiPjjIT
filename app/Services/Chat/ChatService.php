@@ -64,7 +64,7 @@ class ChatService
         ]);
 
         $retrieved = $this->retrievalService->retrieve($conversation->user, $conversation, $content);
-        $sourceLinks = $this->knowledgeLinkExtractor->extractFromResults($retrieved->all());
+        $sourceLinks = $this->knowledgeLinkExtractor->extractFromResults($retrieved->all(), $content);
         $assistant = $conversation->messages()->create([
             'role' => 'assistant',
             'content' => '',

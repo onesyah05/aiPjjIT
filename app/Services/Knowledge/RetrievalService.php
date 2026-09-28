@@ -40,6 +40,22 @@ class RetrievalService
         'tolong',
     ];
 
+    /** @var array<int, string> */
+    private const LINK_INTENT_TERMS = [
+        'chat.whatsapp.com',
+        'gorup',
+        'group',
+        'gruop',
+        'grup',
+        'info',
+        'link',
+        'tautan',
+        'wa',
+        'whatapp',
+        'whatsap',
+        'whatsapp',
+    ];
+
     public function __construct(
         private EmbeddingService $embedding,
         private QdrantService $qdrant,
@@ -118,6 +134,7 @@ class RetrievalService
         $query = $this->accessibleChunks($user, $conversation);
         $searchTerms = $termGroups->flatten()->unique()->values();
         $prioritizeWhatsAppLinks = $this->asksForLink($termGroups);
+        $subjectTerms = $this->subjectTerms($termGroups);
 
         $query->where(function ($q) use ($searchTerms): void {
             foreach ($searchTerms as $term) {
@@ -130,7 +147,7 @@ class RetrievalService
             ->orderByDesc('knowledge_chunks.id')
             ->limit(200)
             ->get()
-            ->map(function (KnowledgeChunk $chunk) use ($prioritizeWhatsAppLinks, $termGroups): array {
+            ->map(function (KnowledgeChunk $chunk) use ($prioritizeWhatsAppLinks, $subjectTerms, $termGroups): array {
                 $content = Str::lower($chunk->content);
                 $matches = $termGroups
                     ->filter(fn (Collection $aliases): bool => $aliases->contains(
@@ -140,7 +157,8 @@ class RetrievalService
                 $score = $matches / $termGroups->count();
 
                 if ($prioritizeWhatsAppLinks && str_contains($content, 'chat.whatsapp.com')) {
-                    $score = min(1.0, $score + 0.5);
+                    $score += 0.15;
+                    $score += $this->relevantLinkContextScore($content, $subjectTerms) * 0.75;
                 }
 
                 return [
@@ -245,6 +263,48 @@ class RetrievalService
                 'tautan',
                 'whatsapp',
             ], true));
+    }
+
+    /**
+     * @param  Collection<int, Collection<int, string>>  $termGroups
+     * @return Collection<int, string>
+     */
+    private function subjectTerms(Collection $termGroups): Collection
+    {
+        return $termGroups
+            ->reject(fn (Collection $aliases): bool => $aliases->intersect(self::LINK_INTENT_TERMS)->isNotEmpty())
+            ->flatten()
+            ->unique()
+            ->values();
+    }
+
+    /** @param Collection<int, string> $subjectTerms */
+    private function relevantLinkContextScore(string $content, Collection $subjectTerms): int
+    {
+        if ($subjectTerms->isEmpty()) {
+            return 0;
+        }
+
+        $lines = collect(preg_split('/\R/u', $content) ?: [])
+            ->map(fn (string $line): string => Str::lower(trim($line)))
+            ->filter()
+            ->values();
+
+        return (int) $lines->map(function (string $line, int $index) use ($lines, $subjectTerms): int {
+            if (! str_contains($line, 'chat.whatsapp.com')) {
+                return 0;
+            }
+
+            $directMatches = $subjectTerms->filter(
+                fn (string $term): bool => str_contains($line, $term),
+            )->count();
+            $previousLine = $index > 0 ? $lines->get($index - 1, '') : '';
+            $previousMatches = $subjectTerms->filter(
+                fn (string $term): bool => str_contains($previousLine, $term),
+            )->count();
+
+            return ($directMatches * 2) + $previousMatches;
+        })->max();
     }
 
     private function accessibleChunks(User $user, Conversation $conversation): Builder

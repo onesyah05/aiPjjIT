@@ -45,7 +45,10 @@ class HandleDiscordMentionTest extends TestCase
         ]);
         $version = $knowledge->versions()->create([
             'version' => 1,
-            'content' => 'Grup AIK: https://chat.whatsapp.com/valid-aik-link',
+            'content' => <<<'MARKDOWN'
+Grup Basis Data: https://chat.whatsapp.com/wrong-course-link
+Grup AIK: https://chat.whatsapp.com/valid-aik-link
+MARKDOWN,
             'source_type' => 'discord',
             'status' => 'approved',
             'processing_status' => 'ready',
@@ -97,8 +100,10 @@ class HandleDiscordMentionTest extends TestCase
         $conversation = DiscordBotConversation::query()->sole();
         $this->assertSame('completed', $conversation->status);
         $this->assertStringContainsString('https://chat.whatsapp.com/valid-aik-link', $conversation->answer);
+        $this->assertStringNotContainsString('https://chat.whatsapp.com/wrong-course-link', $conversation->answer);
         Http::assertSent(fn (Request $request): bool => $request->method() === 'PATCH'
-            && str_contains((string) $request['content'], 'https://chat.whatsapp.com/valid-aik-link'));
+            && str_contains((string) $request['content'], 'https://chat.whatsapp.com/valid-aik-link')
+            && ! str_contains((string) $request['content'], 'https://chat.whatsapp.com/wrong-course-link'));
     }
 
     /** @return Generator<int, string> */

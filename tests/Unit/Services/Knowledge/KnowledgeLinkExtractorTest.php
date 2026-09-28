@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Services\Knowledge;
 
+use App\Models\KnowledgeChunk;
 use App\Services\Knowledge\KnowledgeLinkExtractor;
 use PHPUnit\Framework\TestCase;
 
@@ -37,5 +38,27 @@ MARKDOWN;
         );
 
         $this->assertSame("\n\n### Tautan terkait\n- [Manual PHP](https://php.net/manual/en/)", $appendix);
+    }
+
+    public function test_filters_mixed_group_links_to_the_subject_requested_by_the_user(): void
+    {
+        $retrieved = [[
+            'chunk' => new KnowledgeChunk,
+            'content' => <<<'MARKDOWN'
+- Basis Data: https://chat.whatsapp.com/basis-data
+- AIK 1: https://chat.whatsapp.com/aik-group
+![Embed Thumbnail](https://pps.whatsapp.net/image.jpg)
+MARKDOWN,
+            'score' => 1.0,
+        ]];
+
+        $links = (new KnowledgeLinkExtractor)->extractFromResults(
+            $retrieved,
+            'info gorup AIK dong',
+        );
+
+        $this->assertSame([
+            ['url' => 'https://chat.whatsapp.com/aik-group', 'label' => 'chat.whatsapp.com'],
+        ], $links);
     }
 }

@@ -11,14 +11,60 @@ class KnowledgeLinkExtractor
      * @param  array<int, array{chunk: KnowledgeChunk, content: string, score: float}>  $retrieved
      * @return array<int, array{url: string, label: string}>
      */
-    public function extractFromResults(array $retrieved): array
+    public function extractFromResults(array $retrieved, ?string $question = null): array
     {
-        return collect($retrieved)
-            ->flatMap(fn (array $result): array => $this->extract(
-                $result['chunk']->version?->content ?? $result['content'],
-            ))
+        $subjectTerms = $this->subjectTerms($question);
+        $groupLinkRequested = $this->groupLinkRequested($question);
+        $links = collect($retrieved)
+            ->flatMap(function (array $result, int $resultIndex) use ($subjectTerms): array {
+                return collect($this->extract($result['content']))
+                    ->map(function (array $link, int $linkIndex) use ($result, $resultIndex, $subjectTerms): array {
+                        $link['relevance'] = $this->linkRelevance(
+                            $result['content'],
+                            $link['url'],
+                            $subjectTerms,
+                        );
+                        $link['order'] = ($resultIndex * 100) + $linkIndex;
+
+                        return $link;
+                    })
+                    ->all();
+            });
+
+        if ($groupLinkRequested) {
+            $groupLinks = $links->filter(fn (array $link): bool => in_array(
+                Str::lower((string) parse_url($link['url'], PHP_URL_HOST)),
+                ['chat.google.com', 'chat.whatsapp.com'],
+                true,
+            ));
+
+            if ($groupLinks->isNotEmpty()) {
+                $links = $groupLinks;
+            }
+        }
+
+        if ($subjectTerms !== []) {
+            $highestRelevance = (int) $links->max('relevance');
+            $relevantLinks = $links->filter(
+                fn (array $link): bool => $highestRelevance > 0 && $link['relevance'] === $highestRelevance,
+            );
+
+            if ($relevantLinks->isNotEmpty()) {
+                $links = $relevantLinks;
+            }
+        }
+
+        return $links
+            ->sortBy([
+                ['relevance', 'desc'],
+                ['order', 'asc'],
+            ])
             ->unique('url')
             ->take(8)
+            ->map(fn (array $link): array => [
+                'url' => $link['url'],
+                'label' => $link['label'],
+            ])
             ->values()
             ->all();
     }
@@ -112,5 +158,70 @@ class KnowledgeLinkExtractor
         }
 
         return Str::limit($normalizedLabel !== '' ? $normalizedLabel : 'Buka sumber', 100);
+    }
+
+    /** @return array<int, string> */
+    private function subjectTerms(?string $question): array
+    {
+        $genericTerms = [
+            'dong',
+            'gorup',
+            'group',
+            'gruop',
+            'grup',
+            'info',
+            'link',
+            'mohon',
+            'please',
+            'saya',
+            'tautan',
+            'tolong',
+            'wa',
+            'whatapp',
+            'whatsap',
+            'whatsapp',
+        ];
+
+        return collect(preg_split('/[^\pL\pN]+/u', Str::lower((string) $question)) ?: [])
+            ->filter(fn (string $term): bool => mb_strlen($term) >= 3)
+            ->reject(fn (string $term): bool => in_array($term, $genericTerms, true))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function groupLinkRequested(?string $question): bool
+    {
+        return preg_match('/\b(?:gorup|group|gruop|grup|wa|whatapp|whatsap|whatsapp)\b/iu', (string) $question) === 1;
+    }
+
+    /** @param array<int, string> $subjectTerms */
+    private function linkRelevance(string $content, string $url, array $subjectTerms): int
+    {
+        if ($subjectTerms === []) {
+            return 0;
+        }
+
+        $lines = collect(preg_split('/\R/u', $content) ?: [])
+            ->map(fn (string $line): string => Str::lower(trim($line)))
+            ->filter()
+            ->values();
+        $normalizedUrl = Str::lower($url);
+
+        return (int) $lines->map(function (string $line, int $index) use ($lines, $normalizedUrl, $subjectTerms): int {
+            if (! str_contains($line, $normalizedUrl)) {
+                return 0;
+            }
+
+            $directMatches = collect($subjectTerms)->filter(
+                fn (string $term): bool => str_contains($line, $term),
+            )->count();
+            $previousLine = $index > 0 ? $lines->get($index - 1, '') : '';
+            $previousMatches = collect($subjectTerms)->filter(
+                fn (string $term): bool => str_contains($previousLine, $term),
+            )->count();
+
+            return ($directMatches * 2) + $previousMatches;
+        })->max();
     }
 }
