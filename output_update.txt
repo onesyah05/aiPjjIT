@@ -1,0 +1,2 @@
+STDOUT:\n   PARSE ERROR  PHP Parse error: Syntax error, unexpected T_NS_SEPARATOR in vendor/psy/psysh/src/Exception/ParseErrorException.php on line 44.
+\nSTDERR:\n

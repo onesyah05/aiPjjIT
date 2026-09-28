@@ -1,0 +1,23 @@
+STDOUT:
+WEB RETRIEVAL COUNT: 2
+Web 1 Score: 0.613341 Title: [Discord 1553446923061563422] Forum: ✍️｜info-penting - Tatap muka Basis Data (Bapak Lukman)
+Web 2 Score: 0.6109233 Title: [Discord 1552153770454945802] Forum: ✍️｜info-penting - !!UPDATE!! zoom/google meeting
+
+DISCORD RETRIEVAL COUNT: 15
+Discord 1 Score: 0.8 Title: [Discord 1553446923061563422] Forum: ✍️｜info-penting - Tatap muka Basis Data (Bapak Lukman)
+Discord 2 Score: 0.6 Title: Definisi dan Konsep Basis Data
+Discord 3 Score: 0.6 Title: Definisi dan Konsep Basis Data
+Discord 4 Score: 0.6 Title: Perkuliahan Semester Ganjil Tahun Ajaran 2026/2027
+Discord 5 Score: 0.6 Title: ENTITY RELATIONSHIP DIAGRAM (Lanjutan)
+Discord 6 Score: 0.6 Title: Buku panduan akademik sibermu 2024
+Discord 7 Score: 0.6 Title: Buku panduan akademik sibermu 2024
+Discord 8 Score: 0.6 Title: [Discord 1553295575426932786] Forum: ✍️｜info-penting - Tatap Muka Bahasa Indonesia (Bapak Tri)
+Discord 9 Score: 0.6 Title: [Discord 1553295575426932786] Forum: ✍️｜info-penting - Tatap Muka Bahasa Indonesia (Bapak Tri)
+Discord 10 Score: 0.6 Title: [Discord 1553295575426932786] Forum: ✍️｜info-penting - Tatap Muka Bahasa Indonesia (Bapak Tri)
+Discord 11 Score: 0.6 Title: [Discord 1553295575426932786] Forum: ✍️｜info-penting - Tatap Muka Bahasa Indonesia (Bapak Tri)
+Discord 12 Score: 0.6 Title: [Discord 1552477106183737384] Forum: ✍️｜info-penting - !!CEK BERKALA!! info perkuliahan
+Discord 13 Score: 0.6 Title: [Discord 1551655470085709845] Forum: ✍️｜info-penting - FYI, Yang dinilai dari setiap course/Matakuliah
+Discord 14 Score: 0.6 Title: [Discord 1551655470085709845] Forum: ✍️｜info-penting - FYI, Yang dinilai dari setiap course/Matakuliah
+Discord 15 Score: 0.6 Title: [Discord 1551472919060947075] Forum: ✍️｜info-penting - Jadwal kuliah ganjil 2026/2027
+
+STDERR:
