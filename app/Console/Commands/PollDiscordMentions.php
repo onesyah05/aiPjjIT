@@ -17,8 +17,6 @@ class PollDiscordMentions extends Command
 
     protected $description = 'Poll Discord channel for bot mentions and dispatch AI reply jobs';
 
-    private const BOT_ID = '1545329070315802675';
-
     public function handle(): int
     {
         $daemon = (bool) $this->option('daemon');
@@ -50,10 +48,11 @@ class PollDiscordMentions extends Command
     private function pollOnce(): int
     {
         $token = config('services.discord.bot_token');
-        $channelId = config('services.discord.bot_channel_id', '1552943987428425828');
+        $botId = (string) config('services.discord.bot_user_id');
+        $channelId = (string) config('services.discord.bot_channel_id');
 
-        if (! $token) {
-            $this->error('DISCORD_BOT_TOKEN is not configured.');
+        if (! $token || $botId === '' || $channelId === '') {
+            $this->error('Discord bot token, user ID, and channel ID must be configured.');
 
             return self::FAILURE;
         }
@@ -97,18 +96,18 @@ class PollDiscordMentions extends Command
             // Always advance the cursor
             Cache::forever($cacheKey, $messageId);
 
-            if ($isBot || $authorId === self::BOT_ID) {
+            if ($isBot || $authorId === $botId) {
                 continue;
             }
 
             $mentions = collect($message['mentions'] ?? []);
-            $botMentioned = $mentions->contains('id', self::BOT_ID);
+            $botMentioned = $mentions->contains('id', $botId);
 
             if (! $botMentioned) {
                 continue;
             }
 
-            $question = trim(preg_replace('/<@!?'.self::BOT_ID.'>/', '', $content) ?? $content);
+            $question = trim(preg_replace('/<@!?'.preg_quote($botId, '/').'>/', '', $content) ?? $content);
 
             if ($question === '') {
                 continue;

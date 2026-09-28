@@ -31,6 +31,7 @@ class PollDiscordMentionsTest extends TestCase
             ]]),
         ]);
         config()->set('services.discord.bot_token', 'discord-test-token');
+        config()->set('services.discord.bot_user_id', '1545329070315802675');
         config()->set('services.discord.bot_channel_id', 'channel-1');
         Cache::forget('discord_poll_last_message_channel-1');
 

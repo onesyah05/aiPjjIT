@@ -10,16 +10,6 @@ use Illuminate\Support\Facades\Log;
 
 class DiscordWebhookController extends Controller
 {
-    /**
-     * The bot user ID (SIBERMU ASIST).
-     */
-    private const BOT_ID = '1545329070315802675';
-
-    /**
-     * Only respond to mentions in this specific channel.
-     */
-    private const ALLOWED_CHANNEL_ID = '1552943987428425828';
-
     public function handle(Request $request): JsonResponse
     {
         // Verify the secret token to prevent unauthorized calls
@@ -55,9 +45,11 @@ class DiscordWebhookController extends Controller
         $username = (string) ($data['author']['username'] ?? 'Unknown');
         $content = (string) ($data['content'] ?? '');
         $isBot = (bool) ($data['author']['bot'] ?? false);
+        $botId = (string) config('services.discord.bot_user_id');
+        $allowedChannelId = (string) config('services.discord.bot_channel_id');
 
         // Ignore messages from bots (including self)
-        if ($isBot || $authorId === self::BOT_ID) {
+        if ($isBot || $authorId === $botId) {
             return response()->json(['ok' => true]);
         }
 
@@ -65,20 +57,20 @@ class DiscordWebhookController extends Controller
         $this->indexIfKnowledgeChannel($channelId, $username, $content, $data);
 
         // Only respond to mentions in the designated channel
-        if ($channelId !== self::ALLOWED_CHANNEL_ID) {
+        if ($channelId !== $allowedChannelId) {
             return response()->json(['ok' => true]);
         }
 
         // Only respond when the bot is mentioned
         $mentions = collect($data['mentions'] ?? []);
-        $botMentioned = $mentions->contains('id', self::BOT_ID);
+        $botMentioned = $mentions->contains('id', $botId);
 
         if (! $botMentioned) {
             return response()->json(['ok' => true]);
         }
 
         // Strip the bot mention from the question text
-        $question = trim(preg_replace('/<@!?'.self::BOT_ID.'>/', '', $content) ?? $content);
+        $question = trim(preg_replace('/<@!?'.preg_quote($botId, '/').'>/', '', $content) ?? $content);
 
         if ($question === '') {
             return response()->json(['ok' => true]);
