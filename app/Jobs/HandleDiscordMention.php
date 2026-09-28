@@ -97,6 +97,13 @@ class HandleDiscordMention implements ShouldQueue
                 $recentHistory,
             );
 
+            Log::info('DISCORD_PROMPT_DEBUG', [
+                'channel' => $this->channelId,
+                'retrieved_count' => $retrieved->count(),
+                'prompt_length' => strlen($prompt),
+                'prompt' => $prompt,
+            ]);
+
             $credentials = $credentialPool->getAvailableCredentials(
                 (int) config('services.gemini.max_attempts', 6),
             );
