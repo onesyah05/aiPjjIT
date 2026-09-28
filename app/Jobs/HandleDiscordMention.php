@@ -68,7 +68,8 @@ class HandleDiscordMention implements ShouldQueue
             $dummyUser = User::first() ?? new User(['id' => 1]);
             $dummyConversation = new Conversation(['course_id' => null, 'user_id' => $dummyUser->id]);
 
-            $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question);
+            // Retrieve more chunks (15 instead of 5) because Discord searches globally across ALL courses.
+            $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question, 15);
 
             // Fetch recent conversation history for this channel to give Gemini context
             $recentHistory = DiscordBotConversation::query()
