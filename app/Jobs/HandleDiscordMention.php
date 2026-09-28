@@ -71,20 +71,8 @@ class HandleDiscordMention implements ShouldQueue
             // Retrieve more chunks (15 instead of 5) because Discord searches globally across ALL courses.
             $retrieved = $retrievalService->retrieve($dummyUser, $dummyConversation, $this->question, 15);
 
-            // Fetch recent conversation history for this channel to give Gemini context
-            $recentHistory = DiscordBotConversation::query()
-                ->where('discord_channel_id', $this->channelId)
-                ->where('status', 'completed')
-                ->where('id', '<', $record->id)
-                ->latest('id')
-                ->limit(6)
-                ->get()
-                ->reverse()
-                ->flatMap(fn (DiscordBotConversation $conv): array => [
-                    ['role' => 'user', 'content' => $conv->question],
-                    ['role' => 'assistant', 'content' => $conv->answer ?? ''],
-                ])
-                ->toArray();
+            // Copying Web Chat AI exactly: we pass a clean conversation context
+            // so the AI doesn't get confused by past rejections in the channel history.
 
             $prompt = $promptBuilder->build(
                 $this->question,
@@ -94,7 +82,7 @@ class HandleDiscordMention implements ShouldQueue
                     'links' => $linkExtractor->extract($r['chunk']->version?->content ?? $r['content']),
                 ])->all(),
                 'general',
-                $recentHistory,
+                [],
             );
 
             Log::info('DISCORD_PROMPT_DEBUG', [
