@@ -3,18 +3,18 @@ import { Link } from '@inertiajs/react';
 import { Bell, BookOpenCheck, CheckCheck, KeyRound, X } from 'lucide-react';
 
 const statusStyles = {
-    approved: 'bg-emerald-100 text-emerald-800',
-    rejected: 'bg-red-100 text-red-800',
-    draft: 'bg-amber-100 text-amber-900',
+    approved: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200',
+    rejected: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-200',
+    draft: 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200',
     disabled: 'bg-stone-200 text-stone-700',
-    invalid: 'bg-red-100 text-red-800',
+    invalid: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-200',
 };
 
 function NotificationIcon({ kind }) {
     const Icon = kind === 'credential_health' ? KeyRound : BookOpenCheck;
 
     return (
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-100 text-brand-800">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-brand-100 text-brand-800 dark:bg-white/10 dark:text-brand-200">
             <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
         </span>
     );
@@ -85,7 +85,7 @@ export default function NotificationCenter({ open, onClose, notifications }) {
                                                 {notification.data.status && <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${statusStyles[notification.data.status] || 'bg-stone-100 text-stone-700'}`}>{notification.data.status}</span>}
                                             </span>
                                             <span className="mt-1.5 block text-sm leading-6 text-stone-600">{notification.data.message}</span>
-                                            <span className="mt-2 block text-[11px] font-medium text-stone-400">{notification.created_at ? new Date(notification.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : ''}</span>
+                                            <span className="mt-2 block text-[11px] font-medium text-stone-600">{notification.created_at ? new Date(notification.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : ''}</span>
                                         </span>
                                     </Link>
                                 ))}

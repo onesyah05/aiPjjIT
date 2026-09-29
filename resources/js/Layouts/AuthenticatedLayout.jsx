@@ -1,6 +1,8 @@
 import BrandMark from '@/Components/BrandMark';
 import NotificationCenter, { NotificationTrigger } from '@/Components/NotificationCenter';
 import SidebarNavLink from '@/Components/SidebarNavLink';
+import ThemeToggle from '@/Components/ThemeToggle';
+import useTheme from '@/hooks/useTheme';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { Link, usePage } from '@inertiajs/react';
 import {
@@ -46,6 +48,7 @@ function UserAvatar({ user, size = 'md' }) {
 }
 
 function SidebarContent({ user, notifications, onOpenNotifications, onNavigate = () => {}, collapsed = false, onToggleCollapse }) {
+    const { isDark } = useTheme();
     const workspaceNavigation = [
         { label: 'Beranda', href: route('dashboard'), active: route().current('dashboard'), icon: Home },
         { label: 'Percakapan', href: route('conversations.index'), active: route().current('conversations.*'), icon: MessageCircle },
@@ -69,20 +72,20 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
         adminNavigation.push({ label: 'Audit log', href: route('admin.audit-logs.index'), active: route().current('admin.audit-logs.*'), icon: ScrollText });
     }
 
-    const NavigationGroup = ({ label, items }) => <div>{!collapsed && <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">{label}</p>}<nav className={`mt-2 space-y-1 ${collapsed ? 'flex flex-col items-center' : ''}`} aria-label={label}>{items.map((item) => { const Icon = item.icon; return <SidebarNavLink key={item.label} href={item.href} active={item.active} icon={<Icon size={19} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? item.label : undefined}>{item.label}</SidebarNavLink>; })}</nav></div>;
+    const NavigationGroup = ({ label, items }) => <div>{!collapsed && <p className="sidebar-group-label px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">{label}</p>}<nav className={`mt-2 space-y-1 ${collapsed ? 'flex flex-col items-center' : ''}`} aria-label={label}>{items.map((item) => { const Icon = item.icon; return <SidebarNavLink key={item.label} href={item.href} active={item.active} icon={<Icon size={19} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? item.label : undefined}>{item.label}</SidebarNavLink>; })}</nav></div>;
 
     return (
-        <div className="flex h-full flex-col bg-brand-950 text-white transition-all duration-300">
+        <div className="sidebar-shell flex h-full flex-col bg-brand-950 text-white transition-all duration-300">
             <div className={`flex h-20 shrink-0 items-center justify-between gap-2 border-b border-white/10 ${collapsed ? 'flex-col justify-center py-4' : 'px-4'}`}>
                 <div className="flex items-center gap-2 overflow-hidden">
                     <Link href={route('dashboard')} onClick={onNavigate} aria-label="PJJ AI — Beranda" className="min-w-0">
-                        <BrandMark inverse compact={collapsed} />
+                        <span className="sidebar-brand inline-flex min-w-0"><BrandMark inverse={!isDark} compact={collapsed} /></span>
                     </Link>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    {!collapsed && <NotificationTrigger unreadCount={notifications.unread_count} inverse onClick={onOpenNotifications} />}
+                    {!collapsed && <span className="sidebar-notif inline-grid place-items-center"><NotificationTrigger unreadCount={notifications.unread_count} onClick={onOpenNotifications} /></span>}
                     {onToggleCollapse && (
-                        <button type="button" onClick={onToggleCollapse} className="hidden lg:grid h-8 w-8 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white" aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
+                        <button type="button" onClick={onToggleCollapse} className="sidebar-icon-btn hidden lg:grid h-8 w-8 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white" aria-label={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'} title={collapsed ? 'Perbesar sidebar' : 'Perkecil sidebar'}>
                             {collapsed ? <PanelLeftOpen size={18} strokeWidth={2} aria-hidden="true" /> : <PanelLeftClose size={18} strokeWidth={2} aria-hidden="true" />}
                         </button>
                     )}
@@ -95,7 +98,7 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
                 {adminNavigation.length > 0 && <NavigationGroup label={user.role === 'admin' ? 'Administrasi' : 'Moderasi'} items={adminNavigation} />}
 
                 <div className="border-t border-white/10 pt-5">
-                    {!collapsed && <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">Akun</p>}
+                    {!collapsed && <p className="sidebar-group-label px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-400">Akun</p>}
                     <nav className={`mt-3 space-y-1 ${collapsed ? 'flex flex-col items-center' : ''}`} aria-label="Navigasi akun">
                         <SidebarNavLink href={route('profile.edit')} active={route().current('profile.*')} icon={<UserRound size={20} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? 'Profil' : undefined}>Profil</SidebarNavLink>
                         <SidebarNavLink href={route('privacy')} active={route().current('privacy')} icon={<ShieldCheck size={20} strokeWidth={1.8} />} onClick={onNavigate} collapsed={collapsed} title={collapsed ? 'Privasi & kontribusi' : undefined}>Privasi & kontribusi</SidebarNavLink>
@@ -104,7 +107,8 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
             </div>
 
             <div className={`shrink-0 border-t border-white/10 p-3 flex ${collapsed ? 'flex-col items-center gap-3' : 'items-center gap-2'}`}>
-                <div className={`flex items-center gap-3 rounded-lg bg-white/[0.06] p-3 flex-1 w-full ${collapsed ? 'justify-center p-2' : ''}`}>
+                <span className="sidebar-toggle inline-grid place-items-center"><ThemeToggle variant="onLight" /></span>
+                <div className={`sidebar-user-card flex items-center gap-3 rounded-lg bg-white/[0.06] p-3 flex-1 w-full ${collapsed ? 'justify-center p-2' : ''}`}>
                     <UserAvatar user={user} size={collapsed ? 'sm' : 'md'} />
                     {!collapsed && (
                         <div className="min-w-0 flex-1">
@@ -112,7 +116,7 @@ function SidebarContent({ user, notifications, onOpenNotifications, onNavigate =
                             <p className="mt-0.5 truncate text-xs text-brand-300">{roleLabels[user.role] || user.role}</p>
                         </div>
                     )}
-                    <Link method="post" href={route('logout')} as="button" onClick={onNavigate} className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white ${collapsed ? 'mt-2' : ''}`} aria-label="Keluar dari akun" title={collapsed ? 'Keluar dari akun' : undefined}>
+                    <Link method="post" href={route('logout')} as="button" onClick={onNavigate} className={`sidebar-icon-btn grid h-9 w-9 shrink-0 place-items-center rounded-lg text-brand-200 hover:bg-white/10 hover:text-white ${collapsed ? 'mt-2' : ''}`} aria-label="Keluar dari akun" title={collapsed ? 'Keluar dari akun' : undefined}>
                         <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
                     </Link>
                 </div>
@@ -160,7 +164,7 @@ export default function AuthenticatedLayout({ header, children }) {
                     <DialogPanel transition className="relative w-full max-w-72 transition duration-200 ease-out data-[closed]:-translate-x-full">
                         <DialogTitle className="sr-only">Navigasi aplikasi</DialogTitle>
                         <SidebarContent user={user} notifications={notifications} onOpenNotifications={() => { setMobileNavigationOpen(false); setNotificationsOpen(true); }} onNavigate={() => setMobileNavigationOpen(false)} />
-                        <button type="button" onClick={() => setMobileNavigationOpen(false)} className="absolute right-3 top-5 rounded-lg bg-white/10 p-2 text-white hover:bg-white/20" aria-label="Tutup navigasi">
+                        <button type="button" onClick={() => setMobileNavigationOpen(false)} className="sidebar-close absolute right-3 top-5 rounded-lg bg-white/10 p-2 text-white hover:bg-white/20" aria-label="Tutup navigasi">
                             <X size={24} strokeWidth={2} aria-hidden="true" />
                         </button>
                     </DialogPanel>
@@ -176,6 +180,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <p className="text-xs text-stone-500">{roleLabels[user.role] || user.role}</p>
                         </div>
                         <UserAvatar user={user} size="sm" />
+                        <ThemeToggle />
                         <NotificationTrigger unreadCount={notifications.unread_count} onClick={() => setNotificationsOpen(true)} />
                         <button type="button" onClick={() => setMobileNavigationOpen(true)} className="grid h-10 w-10 place-items-center rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-50" aria-label="Buka navigasi">
                             <Menu size={20} strokeWidth={2} aria-hidden="true" />
@@ -184,7 +189,7 @@ export default function AuthenticatedLayout({ header, children }) {
                 </header>
 
                 {header && (
-                    <header className="border-b border-stone-200/80 bg-white/95 backdrop-blur">
+                    <header className="border-b border-stone-200/80 dark:border-white/10 bg-white/95 dark:bg-brand-950/95 backdrop-blur">
                         <div className="mx-auto max-w-[90rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{header}</div>
                     </header>
                 )}
