@@ -121,11 +121,17 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        // Start with one credential
-        $credential = $credentialPool->getAvailableCredentials(1)->first();
+        $provider = $credentialPool->embeddingProvider();
+        $batchSize = $provider === 'voyage'
+            ? max(1, (int) config('services.voyage.batch_size', 32))
+            : 1;
+
+        // Start with one credential of the configured embedding provider — a
+        // collection can only hold vectors from a single provider.
+        $credential = $credentialPool->getAvailableCredentials(1, $provider)->first();
 
         if ($credential === null) {
-            throw new \RuntimeException('Tidak ada credential untuk membuat embedding.');
+            throw new \RuntimeException("Tidak ada credential {$provider} untuk membuat embedding.");
         }
 
         $startedAt = hrtime(true);
@@ -133,8 +139,10 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             'user_id' => $this->knowledgeVersion->knowledge->user_id,
             'credential_id' => $credential->id,
             'operation' => 'embedding',
-            'provider' => $credential->provider,
-            'model' => config('services.gemini.embedding_model'),
+            'provider' => $provider,
+            'model' => $provider === 'voyage'
+                ? (string) config('services.voyage.model')
+                : (string) config('services.gemini.embedding_model'),
             'status' => 'processing',
             'input_tokens' => $knowledgeChunks->sum('token_count'),
         ]);
@@ -145,13 +153,18 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             // so a failed run can never wipe the searchable knowledge.
             $qdrant->deleteVersion($this->knowledgeVersion->knowledge_id, $this->knowledgeVersion->id);
 
-            foreach ($chunksToEmbed as $chunk) {
+            foreach ($chunksToEmbed->values()->chunk($batchSize)->values() as $batchIndex => $batch) {
+                if ($batchIndex > 0 && $provider === 'voyage') {
+                    // Stay inside the free tier's requests-per-minute limit.
+                    sleep(max(1, (int) config('services.voyage.rpm_delay', 21)));
+                }
+
                 $retryCount = 0;
                 $embedded = false;
 
                 while (! $embedded && $retryCount < 5) {
                     if ($credential === null) {
-                        $credential = $credentialPool->getAvailableCredentials(1)->first();
+                        $credential = $credentialPool->getAvailableCredentials(1, $provider)->first();
                         if ($credential === null) {
                             // If absolutely no credentials, wait a bit
                             sleep(10);
@@ -163,13 +176,23 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
 
                     try {
                         $credentialPool->recordAttempt($credential);
-                        $vector = $embedding->embed($credential->encrypted_secret, $chunk->content);
-                        $chunk->loadMissing('version.knowledge');
-                        $qdrant->upsert($chunk, $vector);
+                        $vectors = $embedding->embedBatch(
+                            $provider,
+                            $credential->encrypted_secret,
+                            $batch->map(fn (KnowledgeChunk $chunk): string => $chunk->content)->all(),
+                        );
+
+                        foreach ($batch->values() as $chunkIndex => $chunk) {
+                            $chunk->loadMissing('version.knowledge');
+                            $qdrant->upsert($chunk, $vectors[$chunkIndex]);
+                        }
+
                         $credentialPool->recordSuccess($credential);
                         $embedded = true;
                     } catch (Throwable $exception) {
                         $credentialPool->recordFailure($credential, 'embedding_or_vector_error');
+
+                        $rateLimited = false;
 
                         if ($exception instanceof RequestException) {
                             $status = $exception->response->status();
@@ -183,13 +206,20 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
                             } elseif (in_array($status, [429, 503], true)) {
                                 // Put this credential on cooldown for 30 seconds
                                 Cache::put("credential_cooldown_{$credential->id}", true, now()->addSeconds(30));
+                                $rateLimited = true;
                             }
                         }
 
                         // Discard current credential, try next one
                         $credential = null;
                         $retryCount++;
-                        sleep(2); // Short sleep before trying next credential
+
+                        if ($rateLimited && $provider === 'voyage') {
+                            // Only a handful of requests per minute are allowed.
+                            sleep(max(1, (int) config('services.voyage.rpm_delay', 21)));
+                        } else {
+                            sleep(2); // Short sleep before trying next credential
+                        }
                     }
                 }
 

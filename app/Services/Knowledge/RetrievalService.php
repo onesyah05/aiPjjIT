@@ -80,7 +80,8 @@ class RetrievalService
             return collect();
         }
 
-        $credential = $this->credentialPool->getAvailableCredentials(1)->first();
+        $provider = $this->credentialPool->embeddingProvider();
+        $credential = $this->credentialPool->getAvailableCredentials(1, $provider)->first();
 
         if ($credential === null) {
             return collect();
@@ -88,7 +89,7 @@ class RetrievalService
 
         try {
             $this->credentialPool->recordAttempt($credential);
-            $vector = $this->embedding->embed($credential->encrypted_secret, $question, 'RETRIEVAL_QUERY');
+            $vector = $this->embedding->embed($provider, $credential->encrypted_secret, $question, 'RETRIEVAL_QUERY');
             $points = $this->qdrant->query($vector, $user, $conversation->course_id, $limit);
             $this->credentialPool->recordSuccess($credential);
         } catch (Throwable $exception) {

@@ -105,6 +105,7 @@ class ChatService
 
         $credentials = $this->credentialPool->getAvailableCredentials(
             (int) config('services.gemini.max_attempts', 3),
+            'gemini',
         );
 
         $models = array_values(array_unique(array_filter(array_merge(

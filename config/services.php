@@ -52,6 +52,18 @@ return [
         'donation_channel_id' => env('DISCORD_DONATION_CHANNEL_ID', '1554268154501271552'),
     ],
 
+    'embedding' => [
+        'provider' => env('EMBEDDING_PROVIDER', 'gemini'),
+    ],
+
+    'voyage' => [
+        'base_url' => env('VOYAGE_BASE_URL', 'https://api.voyageai.com/v1'),
+        'model' => env('VOYAGE_EMBEDDING_MODEL', 'voyage-3.5'),
+        'batch_size' => (int) env('VOYAGE_BATCH_SIZE', 32),
+        'rpm_delay' => (int) env('VOYAGE_RPM_DELAY', 21),
+        'timeout' => (int) env('VOYAGE_TIMEOUT', 60),
+    ],
+
     'pakasir' => [
         'slug' => env('PAKASIR_SLUG'),
         'api_key' => env('PAKASIR_API_KEY'),

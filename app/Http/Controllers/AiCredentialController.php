@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAiCredentialRequest;
 use App\Models\AiCredential;
 use App\Services\AI\GeminiService;
+use App\Services\AI\VoyageService;
 use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,23 +32,33 @@ class AiCredentialController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreAiCredentialRequest $request, GeminiService $gemini): RedirectResponse
+    public function store(StoreAiCredentialRequest $request, GeminiService $gemini, VoyageService $voyage): RedirectResponse
     {
         $validated = $request->validated();
         $secret = $validated['secret'];
+        $provider = $validated['provider'];
 
-        if (! $gemini->validateCredential($secret)) {
-            throw ValidationException::withMessages(['secret' => 'Credential Gemini tidak valid atau tidak dapat digunakan.']);
+        $valid = match ($provider) {
+            'voyage' => $voyage->validateCredential($secret),
+            default => $gemini->validateCredential($secret),
+        };
+
+        if (! $valid) {
+            throw ValidationException::withMessages([
+                'secret' => $provider === 'voyage'
+                    ? 'API key Voyage tidak valid atau tidak dapat digunakan.'
+                    : 'Credential Gemini tidak valid atau tidak dapat digunakan.',
+            ]);
         }
 
-        $fingerprint = hash_hmac('sha256', $secret, (string) config('app.key'));
+        $fingerprint = hash_hmac('sha256', $provider.':'.$secret, (string) config('app.key'));
 
         if (AiCredential::withTrashed()->where('fingerprint', $fingerprint)->exists()) {
             throw ValidationException::withMessages(['secret' => 'Credential ini sudah pernah didaftarkan.']);
         }
 
         $credential = $request->user()->aiCredentials()->create([
-            'provider' => 'gemini',
+            'provider' => $provider,
             'credential_type' => 'api_key',
             'encrypted_secret' => $secret,
             'fingerprint' => $fingerprint,

@@ -12,7 +12,10 @@ import { useState } from 'react';
 export default function Index({ credentials, flash }) {
     const [deleting, setDeleting] = useState(null);
     const confirmRemove = () => { router.delete(route('ai-credentials.destroy', deleting.id)); setDeleting(null); };
-    const form = useForm({ label: '', secret: '', daily_request_limit: '', community_enabled: true, consent: false });
+    const [provider, setProvider] = useState('gemini');
+    const form = useForm({ provider: 'gemini', label: '', secret: '', daily_request_limit: '', community_enabled: true, consent: false });
+
+    const chooseProvider = (value) => { setProvider(value); form.setData('provider', value); };
 
     const submit = (event) => {
         event.preventDefault();
@@ -29,7 +32,7 @@ export default function Index({ credentials, flash }) {
 
     return (
         <AuthenticatedLayout
-            header={<PageHeader eyebrow="Resource bersama" title="Kontribusi Gemini" description="Kelola credential yang Anda bagikan, batas pemakaian, dan kesehatan kontribusi secara transparan." icon={KeyRound} />}
+            header={<PageHeader eyebrow="Resource bersama" title="Kontribusi Credential" description="Bagikan API key Gemini atau Voyage AI, atur batas pemakaian, dan pantau kesehatan kontribusi secara transparan." icon={KeyRound} />}
         >
             <Head title="Kontribusi" />
 
@@ -41,6 +44,26 @@ export default function Index({ credentials, flash }) {
                     <p className="mt-2 text-sm leading-6 text-stone-600">Credential dipakai backend untuk permintaan komunitas, disimpan terenkripsi, dan tidak pernah dikirim kembali ke browser.</p>
 
                     <div className="mt-6 space-y-5">
+                        <div>
+                            <span className="block text-sm font-medium text-stone-700">Jenis credential</span>
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                                {[
+                                    { value: 'gemini', label: 'Gemini', hint: 'Chat & jawaban AI' },
+                                    { value: 'voyage', label: 'Voyage AI', hint: 'Embedding knowledge' },
+                                ].map((option) => (
+                                    <button
+                                        type="button"
+                                        key={option.value}
+                                        onClick={() => chooseProvider(option.value)}
+                                        className={`rounded-lg border px-3 py-2 text-left text-sm transition ${provider === option.value ? 'border-brand-700 bg-brand-50 font-semibold text-brand-800' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}
+                                    >
+                                        {option.label}
+                                        <span className="mt-0.5 block text-xs font-normal text-stone-500">{option.hint}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <label className="block text-sm font-medium text-stone-700">
                             Label
                             <input value={form.data.label} onChange={(event) => form.setData('label', event.target.value)} placeholder="Contoh: Project belajar" className={fieldClassName} required />
@@ -48,20 +71,33 @@ export default function Index({ credentials, flash }) {
                         {form.errors.label && <p className="text-sm text-red-700">{form.errors.label}</p>}
 
                         <label className="block text-sm font-medium text-stone-700">
-                            Gemini API key
+                            {provider === 'voyage' ? 'Voyage AI API key' : 'Gemini API key'}
                             <input type="password" value={form.data.secret} onChange={(event) => form.setData('secret', event.target.value)} autoComplete="off" className={fieldClassName} required />
                         </label>
                         {form.errors.secret && <p className="text-sm text-red-700">{form.errors.secret}</p>}
-                        
-                        <details className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-600">
-                            <summary className="cursor-pointer font-medium text-brand-700 hover:text-brand-800">Cara mendapatkan API key Gemini</summary>
-                            <ol className="ml-4 mt-2 list-decimal space-y-1">
-                                <li>Buka <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="font-semibold text-brand-600 hover:underline">Google AI Studio</a>.</li>
-                                <li>Masuk menggunakan akun Google Anda.</li>
-                                <li>Klik tombol <strong>Create API key</strong> pada project baru atau project yang sudah ada.</li>
-                                <li>Salin API key yang dihasilkan dan tempelkan di atas.</li>
-                            </ol>
-                        </details>
+
+                        {provider === 'voyage' ? (
+                            <details className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-600" open>
+                                <summary className="cursor-pointer font-medium text-brand-700 hover:text-brand-800">Cara mendapatkan API key Voyage AI</summary>
+                                <ol className="ml-4 mt-2 list-decimal space-y-1">
+                                    <li>Buka <a href="https://dashboard.voyageai.com" target="_blank" rel="noreferrer" className="font-semibold text-brand-600 hover:underline">dashboard.voyageai.com</a> dan daftar/masuk.</li>
+                                    <li>Di menu kiri pilih <strong>API keys</strong>.</li>
+                                    <li>Klik <strong>Create API key</strong>, beri nama, lalu salin key yang diawali <code>pa-</code>.</li>
+                                    <li>Tempelkan key di atas. Key Voyage khusus dipakai untuk <strong>embedding knowledge</strong> agar pencarian jadwal & materi tetap akurat.</li>
+                                </ol>
+                                <p className="mt-2 text-xs text-stone-500">Free tier Voyage: 3 request/menit dan 10.000 token/menit — cukup untuk pemakaian komunitas karena sistem kami meng-embed secara batch.</p>
+                            </details>
+                        ) : (
+                            <details className="mt-2 rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-600">
+                                <summary className="cursor-pointer font-medium text-brand-700 hover:text-brand-800">Cara mendapatkan API key Gemini</summary>
+                                <ol className="ml-4 mt-2 list-decimal space-y-1">
+                                    <li>Buka <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="font-semibold text-brand-600 hover:underline">Google AI Studio</a>.</li>
+                                    <li>Masuk menggunakan akun Google Anda.</li>
+                                    <li>Klik tombol <strong>Create API key</strong> pada project baru atau project yang sudah ada.</li>
+                                    <li>Salin API key yang dihasilkan dan tempelkan di atas.</li>
+                                </ol>
+                            </details>
+                        )}
 
                         <label className="block text-sm font-medium text-stone-700">
                             Batas request per hari <span className="font-normal text-stone-500">(opsional)</span>

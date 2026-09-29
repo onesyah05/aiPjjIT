@@ -18,11 +18,12 @@ class CredentialPoolService
      * @return AiCredential|null
      */
     /** @return Collection<int, AiCredential> */
-    public function getAvailableCredentials(int $limit = 3): Collection
+    public function getAvailableCredentials(int $limit = 3, ?string $provider = null): Collection
     {
         return AiCredential::query()
             ->where('status', 'active')
             ->where('community_enabled', true)
+            ->when($provider !== null, fn ($query) => $query->where('provider', $provider))
             ->where(function ($query): void {
                 $query->whereNull('cooldown_until')->orWhere('cooldown_until', '<=', now());
             })
@@ -34,6 +35,15 @@ class CredentialPoolService
             ->orderByRaw('(CAST(success_count AS SIGNED) - CAST(failure_count AS SIGNED)) DESC')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * The configured embedding provider — a Qdrant collection can only hold
+     * vectors from one provider, so embedding never mixes credentials.
+     */
+    public function embeddingProvider(): string
+    {
+        return (string) config('services.embedding.provider', 'gemini');
     }
 
     /**

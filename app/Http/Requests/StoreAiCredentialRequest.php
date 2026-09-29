@@ -23,6 +23,7 @@ class StoreAiCredentialRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'provider' => ['required', 'in:gemini,voyage'],
             'label' => ['required', 'string', 'max:80'],
             'secret' => ['required', 'string', 'min:20', 'max:512'],
             'daily_request_limit' => ['nullable', 'integer', 'min:1', 'max:10000'],

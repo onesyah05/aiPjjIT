@@ -7,8 +7,48 @@ use RuntimeException;
 
 class EmbeddingService
 {
+    public function __construct(private VoyageService $voyage) {}
+
+    /**
+     * Embed a single text with the given provider. The provider must match the
+     * one used to build the Qdrant collection — vectors from different
+     * providers are not comparable.
+     *
+     * @return array<int, float>
+     */
+    public function embed(string $provider, string $secret, string $content, string $taskType = 'RETRIEVAL_DOCUMENT'): array
+    {
+        if ($provider === 'voyage') {
+            return $this->voyage->embed($secret, $content, $taskType === 'RETRIEVAL_QUERY' ? 'query' : 'document');
+        }
+
+        return $this->embedGemini($secret, $content, $taskType);
+    }
+
+    /**
+     * Embed many texts in as few provider calls as possible. Returns vectors
+     * in the same order as the given texts.
+     *
+     * @param  array<int, string>  $texts
+     * @return array<int, array<int, float>>
+     */
+    public function embedBatch(string $provider, string $secret, array $texts, string $taskType = 'RETRIEVAL_DOCUMENT'): array
+    {
+        if ($provider === 'voyage') {
+            return $this->voyage->embedBatch($secret, $texts, $taskType === 'RETRIEVAL_QUERY' ? 'query' : 'document');
+        }
+
+        $vectors = [];
+
+        foreach ($texts as $text) {
+            $vectors[] = $this->embedGemini($secret, $text, $taskType);
+        }
+
+        return $vectors;
+    }
+
     /** @return array<int, float> */
-    public function embed(string $secret, string $content, string $taskType = 'RETRIEVAL_DOCUMENT'): array
+    private function embedGemini(string $secret, string $content, string $taskType): array
     {
         $model = (string) config('services.gemini.embedding_model');
         $payload = [
