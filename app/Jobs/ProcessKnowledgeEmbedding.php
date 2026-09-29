@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AiRequestLog;
+use App\Models\KnowledgeChunk;
 use App\Models\KnowledgeVersion;
 use App\Services\AI\EmbeddingService;
 use App\Services\CredentialPoolService;
@@ -53,13 +54,41 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             ->map(fn ($group): string => $group->join("\n\n"))
             ->values();
 
+        // Chunks whose content is unchanged from an already-embedded version of
+        // this knowledge are reused as-is: their Qdrant point stays valid and no
+        // embedding quota is spent on them.
+        $reusable = KnowledgeChunk::query()
+            ->where('content_hash', '!=', '')
+            ->whereNotNull('content_hash')
+            ->whereHas('version', function ($query): void {
+                $query->where('knowledge_id', $this->knowledgeVersion->knowledge_id)
+                    ->where('is_embedded', true)
+                    ->where('id', '!=', $this->knowledgeVersion->id);
+            })
+            ->orderByDesc('id')
+            ->get()
+            ->keyBy('content_hash');
+
+        $reusedPointIds = [];
+
         $this->knowledgeVersion->chunks()->delete();
 
-        $knowledgeChunks = $chunks->map(function (string $chunk, int $index) {
+        $knowledgeChunks = $chunks->map(function (string $chunk, int $index) use ($reusable, &$reusedPointIds) {
+            $contentHash = md5($chunk);
+            $previous = $reusable->get($contentHash);
+
+            if ($previous !== null) {
+                $previous->update(['knowledge_version_id' => $this->knowledgeVersion->id]);
+                $reusedPointIds[] = $previous->vector_external_id;
+
+                return $previous;
+            }
+
             return $this->knowledgeVersion->chunks()->create([
                 'chunk_index' => $index,
                 'heading_path' => $this->headingFor($chunk),
                 'content' => $chunk,
+                'content_hash' => $contentHash,
                 'token_count' => str_word_count(strip_tags($chunk)),
                 'vector_external_id' => Str::uuid(),
             ]);
@@ -70,6 +99,24 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
                 'processing_status' => 'ready',
                 'processing_error' => null,
             ]);
+
+            return;
+        }
+
+        $chunksToEmbed = $knowledgeChunks->reject(
+            fn (KnowledgeChunk $chunk): bool => in_array($chunk->vector_external_id, $reusedPointIds, true),
+        )->values();
+
+        if ($reusedPointIds !== []) {
+            $qdrant->updatePayloadVersion(
+                $reusedPointIds,
+                $this->knowledgeVersion->knowledge_id,
+                $this->knowledgeVersion->id,
+            );
+        }
+
+        if ($chunksToEmbed->isEmpty()) {
+            $this->finalizeEmbedding($qdrant);
 
             return;
         }
@@ -98,7 +145,7 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             // so a failed run can never wipe the searchable knowledge.
             $qdrant->deleteVersion($this->knowledgeVersion->knowledge_id, $this->knowledgeVersion->id);
 
-            foreach ($knowledgeChunks as $chunk) {
+            foreach ($chunksToEmbed as $chunk) {
                 $retryCount = 0;
                 $embedded = false;
 
@@ -165,6 +212,15 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             'latency_ms' => (int) round((hrtime(true) - $startedAt) / 1_000_000),
         ]);
 
+        $this->finalizeEmbedding($qdrant);
+    }
+
+    /**
+     * Mark the version ready once all of its chunks are searchable and retire
+     * the superseded version's points.
+     */
+    private function finalizeEmbedding(QdrantService $qdrant): void
+    {
         // Every chunk of this version is live — now retire the previous version's points.
         $qdrant->deleteKnowledge($this->knowledgeVersion->knowledge_id, $this->knowledgeVersion->id);
 

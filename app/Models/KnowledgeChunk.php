@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['knowledge_version_id', 'chunk_index', 'heading_path', 'content', 'token_count', 'vector_external_id'])]
+#[Fillable(['knowledge_version_id', 'chunk_index', 'heading_path', 'content', 'content_hash', 'token_count', 'vector_external_id'])]
 class KnowledgeChunk extends Model
 {
     /** @use HasFactory<KnowledgeChunkFactory> */

@@ -70,6 +70,26 @@ class QdrantService
     }
 
     /**
+     * Repoint reused points to the new version so the cleanup step keeps them.
+     *
+     * @param  array<int, string>  $pointIds
+     */
+    public function updatePayloadVersion(array $pointIds, int $knowledgeId, int $versionId): void
+    {
+        if (! $this->enabled() || $pointIds === []) {
+            return;
+        }
+
+        $this->client()->post($this->collectionPath().'/points/payload?wait=true', [
+            'payload' => [
+                'knowledge_id' => $knowledgeId,
+                'version_id' => $versionId,
+            ],
+            'points' => $pointIds,
+        ])->throw();
+    }
+
+    /**
      * Remove leftover points from previous failed attempts of this version.
      */
     public function deleteVersion(int $knowledgeId, int $versionId): void
