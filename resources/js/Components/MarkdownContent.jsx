@@ -73,7 +73,7 @@ export default function MarkdownContent({ content }) {
 
                     return isBlock
                         ? <code className={className}>{children}</code>
-                        : <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-[0.875em] font-semibold text-brand-800">{children}</code>;
+                        : <code className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-[0.875em] font-semibold text-brand-800 dark:text-brand-200">{children}</code>;
                 },
                 table: ({ children }) => (
                     <div className="my-5 overflow-x-auto border border-stone-200">

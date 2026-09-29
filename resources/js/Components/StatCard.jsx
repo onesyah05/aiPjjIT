@@ -1,9 +1,9 @@
 export default function StatCard({ label, value, help, icon: Icon, tone = 'brand' }) {
     const tones = {
-        brand: 'bg-brand-50 text-brand-800 ring-brand-100',
-        green: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-        amber: 'bg-amber-50 text-amber-700 ring-amber-100',
-        red: 'bg-red-50 text-red-700 ring-red-100',
+        brand: 'bg-brand-50 text-brand-800 ring-brand-100 dark:text-brand-100',
+        green: 'bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-200',
+        amber: 'bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-200',
+        red: 'bg-red-50 text-red-700 ring-red-100 dark:bg-red-500/10 dark:text-red-200',
         stone: 'bg-stone-100 text-stone-600 ring-stone-200',
     };
 

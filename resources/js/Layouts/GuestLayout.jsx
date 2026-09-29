@@ -1,4 +1,5 @@
 import BrandMark from '@/Components/BrandMark';
+import ThemeToggle from '@/Components/ThemeToggle';
 import { Link } from '@inertiajs/react';
 
 const communityLines = [
@@ -84,7 +85,10 @@ export default function GuestLayout({ children, wide = false, immersive = false 
             <header className="border-b border-stone-200 bg-white">
                 <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-4 sm:px-6">
                     <Link href="/" aria-label="PJJ AI"><BrandMark /></Link>
-                    <Link href={route('privacy')} className="text-sm font-semibold text-stone-600 hover:text-brand-800">Privasi & kontribusi</Link>
+                    <div className="flex items-center gap-3">
+                        <Link href={route('privacy')} className="text-sm font-semibold text-stone-600 hover:text-brand-800">Privasi & kontribusi</Link>
+                        <ThemeToggle />
+                    </div>
                 </div>
             </header>
 
