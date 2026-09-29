@@ -62,6 +62,7 @@ return [
     'gemini' => [
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
         'model' => env('AI_DEFAULT_MODEL', 'gemini-3.8-flash'),
+        'fallback_models' => array_values(array_filter(explode(',', (string) env('AI_FALLBACK_MODELS', 'gemini-flash-latest,gemini-flash-lite-latest')))),
         'embedding_model' => env('AI_EMBEDDING_MODEL', 'gemini-embedding-001'),
         'embedding_dimensions' => (int) env('AI_EMBEDDING_DIMENSIONS', 768),
         'timeout' => (int) env('AI_REQUEST_TIMEOUT', 60),

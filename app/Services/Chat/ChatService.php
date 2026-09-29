@@ -107,6 +107,11 @@ class ChatService
             (int) config('services.gemini.max_attempts', 3),
         );
 
+        $models = array_values(array_unique(array_filter(array_merge(
+            [(string) config('services.gemini.model')],
+            (array) config('services.gemini.fallback_models', []),
+        ))));
+
         if ($credentials->isEmpty()) {
             $assistant->update(['status' => 'failed', 'error_code' => 'credentials_unavailable']);
             AiRequestLog::query()->create([
@@ -139,10 +144,35 @@ class ChatService
                 'retrieved_chunks' => $retrieved->count(),
             ]);
 
+            $usedModel = (string) config('services.gemini.model');
+
             try {
-                foreach ($this->gemini->stream($credential->encrypted_secret, $prompt) as $chunk) {
-                    $generatedContent .= $chunk;
-                    yield ['content' => $chunk];
+                $lastModelException = null;
+
+                foreach ($models as $model) {
+                    try {
+                        foreach ($this->gemini->stream($credential->encrypted_secret, $prompt, $model) as $chunk) {
+                            $generatedContent .= $chunk;
+                            yield ['content' => $chunk];
+                        }
+
+                        $usedModel = $model;
+                        $lastModelException = null;
+
+                        break;
+                    } catch (RequestException $exception) {
+                        if (! in_array($exception->response->status(), [429, 503], true)) {
+                            throw $exception;
+                        }
+
+                        // Model overloaded/quota-bound: discard any partial output and try the next model.
+                        $generatedContent = '';
+                        $lastModelException = $exception;
+                    }
+                }
+
+                if ($lastModelException !== null) {
+                    throw $lastModelException;
                 }
 
                 if ($generatedContent === '') {
@@ -162,12 +192,12 @@ class ChatService
                     'content' => $generatedContent,
                     'status' => 'completed',
                     'provider' => $credential->provider,
-                    'model' => config('services.gemini.model'),
+                    'model' => $usedModel,
                     'latency_ms' => $latency,
                     'error_code' => null,
                 ]);
                 $sources = $this->persistSources($assistant, $retrieved->all());
-                $log->update(['status' => 'completed', 'latency_ms' => $latency]);
+                $log->update(['status' => 'completed', 'latency_ms' => $latency, 'model' => $usedModel]);
                 yield ['sources' => $sources, 'message_id' => $assistant->id];
 
                 return;

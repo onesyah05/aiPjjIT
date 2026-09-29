@@ -24,6 +24,8 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
     /** @var array<int, int> */
     public array $backoff = [15, 60, 180];
 
+    public int $timeout = 300;
+
     /**
      * Create a new job instance.
      */

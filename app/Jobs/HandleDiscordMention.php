@@ -19,7 +19,7 @@ class HandleDiscordMention implements ShouldQueue
 
     public int $tries = 4;
 
-    public int $timeout = 60;
+    public int $timeout = 80;
 
     /** @return array<int, int> */
     public function backoff(): array

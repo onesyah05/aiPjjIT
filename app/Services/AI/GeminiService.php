@@ -9,9 +9,9 @@ use Throwable;
 
 class GeminiService
 {
-    public function generate(string $secret, string $prompt): string
+    public function generate(string $secret, string $prompt, ?string $model = null): string
     {
-        $model = config('services.gemini.model');
+        $model ??= config('services.gemini.model');
         $response = $this->client($secret)->post("models/{$model}:generateContent", [
             'contents' => [[
                 'role' => 'user',
@@ -29,9 +29,9 @@ class GeminiService
     }
 
     /** @return Generator<int, string> */
-    public function stream(string $secret, string $prompt): Generator
+    public function stream(string $secret, string $prompt, ?string $model = null): Generator
     {
-        $model = config('services.gemini.model');
+        $model ??= config('services.gemini.model');
         $response = $this->client($secret)
             ->withOptions(['stream' => true])
             ->post("models/{$model}:streamGenerateContent?alt=sse", $this->payload($prompt));
