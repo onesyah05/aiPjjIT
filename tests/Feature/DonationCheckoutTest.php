@@ -46,7 +46,8 @@ class DonationCheckoutTest extends TestCase
             && $request->hasFile('files[0]', filename: 'donasi-qris.png'));
         Http::assertSent(fn ($request) => $request->method() === 'PATCH'
             && str_contains($request->url(), '/webhooks/222222222222222222/interaction-token/messages/@original')
-            && str_contains($request['content'], 'DM Anda'));
+            && str_contains($request['content'], 'QRIS SANDBOX')
+            && str_contains($request['content'], 'Jangan transfer uang sungguhan'));
     }
 
     public function test_retry_does_not_create_another_transaction_or_dm(): void
@@ -75,6 +76,60 @@ class DonationCheckoutTest extends TestCase
         (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
     }
 
+    public function test_live_donation_rejects_sandbox_qris_with_a_private_explanation(): void
+    {
+        $donation = $this->donation();
+        $donation->update(['is_sandbox' => false]);
+        Http::fake([
+            'app.pakasir.com/*' => Http::response($this->transaction()),
+            'discord.com/api/v10/webhooks/*' => Http::response([], 200),
+        ]);
+
+        (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
+
+        $this->assertDatabaseHas('donations', [
+            'id' => $donation->id,
+            'status' => 'failed',
+            'pakasir_txn_id' => null,
+            'dm_message_id' => null,
+        ]);
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($request) => $request->method() === 'PATCH'
+            && str_contains($request->url(), '/webhooks/222222222222222222/interaction-token/messages/@original')
+            && str_contains($request['content'], 'mode proyek Pakasir tidak sesuai'));
+    }
+
+    public function test_checkout_accepts_documented_expired_at_field(): void
+    {
+        $donation = $this->donation();
+        $transaction = $this->transaction();
+        $transaction['expired_at'] = $transaction['expires_at'];
+        unset($transaction['expires_at']);
+        Http::fake([
+            'app.pakasir.com/*' => Http::response($transaction),
+            'discord.com/api/v10/users/@me/channels' => Http::response(['id' => '333333333333333333']),
+            'discord.com/api/v10/channels/*/messages' => Http::response(['id' => '444444444444444444']),
+            'discord.com/api/v10/webhooks/*' => Http::response([], 200),
+        ]);
+
+        (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->handle(app(PakasirClient::class));
+
+        $this->assertSame('444444444444444444', $donation->fresh()->dm_message_id);
+    }
+
+    public function test_failure_after_sandbox_dm_keeps_the_private_notice_marked_as_test(): void
+    {
+        $donation = $this->donation();
+        $donation->update(['dm_message_id' => '444444444444444444']);
+        Http::fake(['discord.com/api/v10/webhooks/*' => Http::response([], 200)]);
+
+        (new CreateDonationCheckout($donation->id, '222222222222222222', 'interaction-token'))->failed(new \RuntimeException('Discord response edit failed.'));
+
+        Http::assertSent(fn ($request) => $request->method() === 'PATCH'
+            && str_contains($request['content'], 'QRIS SANDBOX')
+            && str_contains($request['content'], 'bukan pembayaran nyata'));
+    }
+
     private function donation(): Donation
     {
         config()->set('services.pakasir.slug', 'test-project');
@@ -99,9 +154,8 @@ class DonationCheckoutTest extends TestCase
             'amount' => 50000,
             'total_payment' => 50660,
             'payment_method' => 'qris',
-            'status' => 'pending',
             'qr_string' => '000201QRIS-TEST',
-            'expired_at' => now()->addHour()->toISOString(),
+            'expires_at' => now()->addHour()->toISOString(),
             'is_sandbox' => true,
         ];
     }

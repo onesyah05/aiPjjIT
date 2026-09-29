@@ -30,15 +30,17 @@ class DiscordDonationLeaderboard
         ))->all();
 
         $embed = [
-            'title' => '🏆 Top Donors'.(config('services.pakasir.sandbox') ? ' (Sandbox)' : ''),
+            'title' => '🏆 Top Donors'.(config('services.pakasir.sandbox') ? ' — SANDBOX / UJI COBA' : ''),
             'description' => implode("\n", $lines) ?: 'Belum ada donasi terkonfirmasi. Jadilah donatur pertama!',
             'color' => 16763955,
             'fields' => [
-                ['name' => 'Total terkumpul', 'value' => 'Rp'.number_format((int) $totals->amount_total, 0, ',', '.'), 'inline' => true],
+                ['name' => config('services.pakasir.sandbox') ? 'Total simulasi' : 'Total terkumpul', 'value' => 'Rp'.number_format((int) $totals->amount_total, 0, ',', '.'), 'inline' => true],
                 ['name' => 'Donasi', 'value' => (string) $totals->donations_count, 'inline' => true],
                 ['name' => 'Donatur', 'value' => (string) $totals->donors_count, 'inline' => true],
             ],
-            'footer' => ['text' => 'Hanya pembayaran yang sudah dikonfirmasi yang dihitung.'],
+            'footer' => ['text' => config('services.pakasir.sandbox')
+                ? 'Uji coba saja; tidak ada uang sungguhan yang diterima.'
+                : 'Hanya pembayaran yang sudah dikonfirmasi yang dihitung.'],
         ];
 
         if ($latestDonation !== null && filled($latestDonation->message)) {
@@ -60,7 +62,7 @@ class DiscordDonationLeaderboard
                 'components' => [[
                     'type' => 2,
                     'style' => 3,
-                    'label' => '🎁 Donate',
+                    'label' => config('services.pakasir.sandbox') ? '🎁 Donate (Test)' : '🎁 Donate',
                     'custom_id' => 'donation:open',
                 ]],
             ]],

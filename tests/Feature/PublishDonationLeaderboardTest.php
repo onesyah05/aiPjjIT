@@ -47,6 +47,9 @@ class PublishDonationLeaderboardTest extends TestCase
 
         $this->assertDatabaseCount('donation_leaderboards', 1);
         $payload = $leaderboard->payload();
+        $this->assertStringContainsString('SANDBOX / UJI COBA', $payload['embeds'][0]['title']);
+        $this->assertSame('Total simulasi', $payload['embeds'][0]['fields'][0]['name']);
+        $this->assertSame('🎁 Donate (Test)', $payload['components'][0]['components'][0]['label']);
         $this->assertStringContainsString('<@222222222222222222>', $payload['embeds'][0]['description']);
         $this->assertStringNotContainsString('<@444444444444444444>', $payload['embeds'][0]['description']);
         $this->assertSame('Rp50.000', $payload['embeds'][0]['fields'][0]['value']);

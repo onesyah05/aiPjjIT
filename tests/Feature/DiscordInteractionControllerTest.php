@@ -70,7 +70,7 @@ class DiscordInteractionControllerTest extends TestCase
         $this->signedInteraction($this->interaction(5, [
             'custom_id' => 'donation:submit',
             'components' => [['type' => 18, 'component' => ['custom_id' => 'amount', 'value' => '100']]],
-        ]))->assertJsonPath('type', 4);
+        ]))->assertJsonPath('type', 4)->assertJsonPath('data.flags', 64);
 
         $this->assertDatabaseCount('donations', 0);
     }
@@ -80,7 +80,7 @@ class DiscordInteractionControllerTest extends TestCase
         $this->signedInteraction($this->interaction(5, [
             'custom_id' => 'donation:submit',
             'components' => [['type' => 18, 'component' => ['custom_id' => 'amount', 'value' => '10000001']]],
-        ]))->assertJsonPath('type', 4);
+        ]))->assertJsonPath('type', 4)->assertJsonPath('data.flags', 64);
 
         $this->assertDatabaseCount('donations', 0);
     }
