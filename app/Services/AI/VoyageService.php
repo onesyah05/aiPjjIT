@@ -57,7 +57,13 @@ class VoyageService
     public function validateCredential(string $secret): bool
     {
         try {
-            return $this->client($secret)->get('models')->successful();
+            return $this->client($secret)
+                ->post('embeddings', [
+                    'model' => (string) config('services.voyage.model', 'voyage-3.5'),
+                    'input' => 'tes koneksi',
+                    'input_type' => 'document',
+                ])
+                ->successful();
         } catch (Throwable) {
             return false;
         }
