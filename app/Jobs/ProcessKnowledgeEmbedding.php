@@ -93,7 +93,10 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
         ]);
 
         try {
-            $qdrant->deleteKnowledge($this->knowledgeVersion->knowledge_id);
+            // Clear orphans from previous failed attempts of this same version.
+            // Old-version vectors are only removed after every chunk succeeds,
+            // so a failed run can never wipe the searchable knowledge.
+            $qdrant->deleteVersion($this->knowledgeVersion->knowledge_id, $this->knowledgeVersion->id);
 
             foreach ($knowledgeChunks as $chunk) {
                 $retryCount = 0;
@@ -161,6 +164,9 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             'status' => 'completed',
             'latency_ms' => (int) round((hrtime(true) - $startedAt) / 1_000_000),
         ]);
+
+        // Every chunk of this version is live — now retire the previous version's points.
+        $qdrant->deleteKnowledge($this->knowledgeVersion->knowledge_id, $this->knowledgeVersion->id);
 
         $this->knowledgeVersion->update([
             'is_embedded' => true,

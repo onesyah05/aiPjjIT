@@ -38,7 +38,41 @@ class QdrantService
         ])->throw();
     }
 
-    public function deleteKnowledge(int $knowledgeId): void
+    public function deleteKnowledge(int $knowledgeId, ?int $exceptVersionId = null): void
+    {
+        if (! $this->enabled()) {
+            return;
+        }
+
+        $collection = $this->client()->get($this->collectionPath());
+
+        if ($collection->notFound()) {
+            return;
+        }
+
+        $collection->throw();
+
+        $filter = ['must' => [[
+            'key' => 'knowledge_id',
+            'match' => ['value' => $knowledgeId],
+        ]]];
+
+        if ($exceptVersionId !== null) {
+            $filter['must_not'] = [[
+                'key' => 'version_id',
+                'match' => ['value' => $exceptVersionId],
+            ]];
+        }
+
+        $this->client()->post($this->collectionPath().'/points/delete?wait=true', [
+            'filter' => $filter,
+        ])->throw();
+    }
+
+    /**
+     * Remove leftover points from previous failed attempts of this version.
+     */
+    public function deleteVersion(int $knowledgeId, int $versionId): void
     {
         if (! $this->enabled()) {
             return;
@@ -54,10 +88,10 @@ class QdrantService
 
         $this->client()->post($this->collectionPath().'/points/delete?wait=true', [
             'filter' => [
-                'must' => [[
-                    'key' => 'knowledge_id',
-                    'match' => ['value' => $knowledgeId],
-                ]],
+                'must' => [
+                    ['key' => 'knowledge_id', 'match' => ['value' => $knowledgeId]],
+                    ['key' => 'version_id', 'match' => ['value' => $versionId]],
+                ],
             ],
         ])->throw();
     }
