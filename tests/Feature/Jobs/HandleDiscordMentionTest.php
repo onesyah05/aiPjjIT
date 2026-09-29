@@ -65,7 +65,8 @@ MARKDOWN;
         $this->assertSame($answer, $discordConversation->answer);
         $webConversation = Conversation::query()->sole();
         $this->assertSame($user->id, $webConversation->user_id);
-        $this->assertSame('[Discord] info group AIK', $webConversation->title);
+        $this->assertSame('[Discord] student', $webConversation->title);
+        $this->assertSame($webConversation->id, $discordConversation->conversation_id);
         Http::assertSent(fn (Request $request): bool => $request->method() === 'PATCH'
             && str_contains((string) $request['content'], 'https://chat.whatsapp.com/valid-aik-link')
             && str_contains((string) $request['content'], 'Tatap maya minggu pertama ditunda')
@@ -176,6 +177,47 @@ MARKDOWN;
         $discordConversation = DiscordBotConversation::query()->sole();
         $this->assertSame('failed', $discordConversation->status);
         $this->assertSame('exception', $discordConversation->error_code);
+    }
+
+    public function test_reuses_one_conversation_per_discord_user(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://discord.com/api/v10/channels/channel-1/typing' => Http::response(status: 204),
+            'https://discord.com/api/v10/channels/channel-1/messages/placeholder-1' => Http::response(),
+            'https://discord.com/api/v10/channels/channel-1/messages' => Http::response(['id' => 'placeholder-1']),
+        ]);
+        config()->set('services.discord.bot_token', 'discord-test-token');
+        User::factory()->create(['email' => 'discord-bot@pjj.ai']);
+        $chatService = Mockery::mock(ChatService::class);
+        $chatService->shouldReceive('stream')
+            ->twice()
+            ->andReturnUsing(fn (): Generator => $this->streamingResponse('Jawaban.'));
+
+        $first = new HandleDiscordMention(
+            channelId: 'channel-1',
+            messageId: 'message-1',
+            userId: 'user-1',
+            username: 'student',
+            question: 'pertanyaan pertama',
+        );
+        $first->handle($chatService);
+
+        $second = new HandleDiscordMention(
+            channelId: 'channel-1',
+            messageId: 'message-2',
+            userId: 'user-1',
+            username: 'student',
+            question: 'pertanyaan kedua',
+        );
+        $second->handle($chatService);
+
+        $webConversation = Conversation::query()->sole();
+        $this->assertSame('[Discord] student', $webConversation->title);
+        $this->assertSame(
+            [$webConversation->id, $webConversation->id],
+            DiscordBotConversation::query()->orderBy('id')->pluck('conversation_id')->all(),
+        );
     }
 
     /** @return Generator<int, array{content: string}> */

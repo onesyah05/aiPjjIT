@@ -76,12 +76,8 @@ class HandleDiscordMention implements ShouldQueue
             $user ??= User::query()
                 ->where('email', 'discord-bot@pjj.ai')
                 ->first() ?? User::query()->oldest('id')->firstOrFail();
-            $conversation = Conversation::query()->create([
-                'user_id' => $user->id,
-                'mode' => 'general',
-                'status' => 'active',
-                'title' => '[Discord] '.mb_substr($this->question, 0, 70),
-            ]);
+            $conversation = $this->resolveConversation($user->id);
+            $record->update(['conversation_id' => $conversation->id]);
             $answer = '';
 
             foreach ($chatService->stream($conversation, $this->question, "discord:{$this->messageId}") as $event) {
@@ -129,6 +125,34 @@ class HandleDiscordMention implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    /**
+     * Keep every mention from one Discord user in a single ongoing web
+     * conversation instead of spawning a new one per message.
+     */
+    private function resolveConversation(int $ownerId): Conversation
+    {
+        $conversationId = DiscordBotConversation::query()
+            ->where('discord_user_id', $this->userId)
+            ->whereNotNull('conversation_id')
+            ->orderByDesc('id')
+            ->value('conversation_id');
+
+        $conversation = $conversationId !== null
+            ? Conversation::query()->find($conversationId)
+            : null;
+
+        if ($conversation === null || $conversation->status !== 'active') {
+            $conversation = Conversation::query()->create([
+                'user_id' => $ownerId,
+                'mode' => 'general',
+                'status' => 'active',
+                'title' => '[Discord] '.mb_substr($this->username, 0, 60),
+            ]);
+        }
+
+        return $conversation;
     }
 
     private function sendTyping(): void
