@@ -161,7 +161,7 @@ export default function Show({ conversation, courses }) {
 
             <div className="flex h-[calc(100dvh-4rem)] flex-col overflow-hidden lg:h-dvh relative">
                 <div className="absolute top-4 left-0 right-0 z-30 flex justify-center pointer-events-none px-4">
-                    <div className="pointer-events-auto group relative flex flex-col items-center overflow-hidden rounded-full bg-white/90 backdrop-blur-md border border-stone-200/50 shadow-sm hover:shadow-xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:w-[600px] hover:rounded-3xl w-[240px] h-[44px] hover:h-[200px] max-w-full">
+                    <div className="pointer-events-auto group relative flex flex-col items-center overflow-hidden rounded-full bg-white/90 dark:bg-stone-900/90 backdrop-blur-md border border-stone-200/50 dark:border-white/10 shadow-sm hover:shadow-xl transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] hover:w-[600px] hover:rounded-3xl w-[240px] h-[44px] hover:h-[200px] max-w-full">
                         
                         {/* Compact State */}
                         <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-100 transition-opacity duration-300 group-hover:opacity-0 px-4">
@@ -216,7 +216,7 @@ export default function Show({ conversation, courses }) {
                         {messages.map((message, messageIndex) => (
                             message.role === 'user' ? (
                                 <article key={message.id} className="flex items-start justify-end gap-3">
-                                    <div className="max-w-[85%] rounded-card rounded-tr-sm bg-brand-800 px-5 py-3.5 text-sm leading-7 text-white shadow-sm sm:max-w-2xl sm:px-6">
+                                    <div className="conv-user max-w-[85%] rounded-card rounded-tr-sm bg-brand-800 px-5 py-3.5 text-sm leading-7 text-white shadow-sm sm:max-w-2xl sm:px-6">
                                         <div className="whitespace-pre-wrap">{message.content}</div>
                                     </div>
                                     <div className="mt-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-200 bg-brand-50 text-brand-800 sm:flex">
@@ -230,7 +230,7 @@ export default function Show({ conversation, courses }) {
                                     <div className="min-w-0">
                                         <div className="mb-2">
                                             <p className="text-sm font-bold leading-5 text-ink">PJJ AI</p>
-                                            <p className="text-xs leading-5 text-stone-500">Asisten belajar SIBERMU</p>
+                                            <p className="text-xs leading-5 text-stone-600">Asisten belajar SIBERMU</p>
                                         </div>
                                         <div className="rounded-card rounded-tl-sm border border-stone-200 bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6">
                                             {message.content ? (
@@ -284,12 +284,12 @@ export default function Show({ conversation, courses }) {
                             <div className="flex items-end gap-2 sm:gap-3">
                                 <label className="sr-only" htmlFor="chat-message">Pesan</label>
                                 <textarea id="chat-message" value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={submitOnEnter} rows="1" maxLength="6000" placeholder="Tanyakan sesuatu tentang materi…" className="min-h-11 max-h-32 flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm leading-6 text-ink placeholder:text-stone-400 focus:ring-0 sm:text-base" />
-                                <button type="submit" disabled={streaming || !input.trim()} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5">
+                                <button type="submit" disabled={streaming || !input.trim()} className="conv-send inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5">
                                     <Send size={16} aria-hidden="true" />
                                     <span className="hidden sm:inline">{streaming ? 'Mengirim…' : 'Kirim'}</span>
                                 </button>
                             </div>
-                            <p className="px-2 pt-1 text-[11px] leading-4 text-stone-400">Enter untuk mengirim · Shift + Enter untuk baris baru</p>
+                            <p className="px-2 pt-1 text-[11px] leading-4 text-stone-600">Enter untuk mengirim · Shift + Enter untuk baris baru</p>
                         </form>
                     </div>
                 </footer>

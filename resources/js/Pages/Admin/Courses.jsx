@@ -85,7 +85,7 @@ function CourseFormDialog({ course, open, onClose }) {
 
                             <div className="flex flex-col-reverse gap-3 border-t border-stone-200 bg-stone-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
                                 <button type="button" onClick={onClose} className="min-h-11 rounded-lg border border-stone-300 bg-white px-5 text-sm font-semibold text-stone-700 hover:bg-stone-100">Batal</button>
-                                <button type="submit" disabled={form.processing} className="min-h-11 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 disabled:cursor-wait disabled:opacity-60">
+                                <button type="submit" disabled={form.processing} className="min-h-11 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 disabled:cursor-wait disabled:opacity-60 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">
                                     {form.processing ? 'Menyimpan…' : course ? 'Simpan perubahan' : 'Tambah mata kuliah'}
                                 </button>
                             </div>
@@ -135,7 +135,7 @@ function DeleteCourseDialog({ course, onClose }) {
                         </div>
                         <div className="flex flex-col-reverse gap-3 border-t border-stone-200 bg-stone-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
                             <button type="button" onClick={onClose} disabled={form.processing} className="min-h-11 rounded-lg border border-stone-300 bg-white px-5 text-sm font-semibold text-stone-700 hover:bg-stone-100 disabled:opacity-60">Batal</button>
-                            <button type="button" onClick={destroy} disabled={form.processing} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-700 px-5 text-sm font-bold text-white hover:bg-red-800 disabled:cursor-wait disabled:opacity-60">
+                            <button type="button" onClick={destroy} disabled={form.processing} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-red-700 px-5 text-sm font-bold text-white hover:bg-red-800 disabled:cursor-wait disabled:opacity-60 dark:bg-red-500 dark:hover:bg-red-400">
                                 <Trash2 size={17} strokeWidth={1.8} aria-hidden="true" />
                                 {form.processing ? 'Menghapus…' : 'Ya, hapus permanen'}
                             </button>
@@ -166,7 +166,7 @@ export default function Courses({ courses, flash }) {
     return (
         <AuthenticatedLayout
             header={<PageHeader eyebrow="Administrasi" title="Mata kuliah" description="Atur pilihan mata kuliah yang dapat digunakan pada percakapan dan knowledge." icon={GraduationCap} actions={(
-                    <button type="button" onClick={openCreateDialog} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900">
+                    <button type="button" onClick={openCreateDialog} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">
                         <CirclePlus size={19} strokeWidth={1.8} aria-hidden="true" />
                         Tambah mata kuliah
                     </button>

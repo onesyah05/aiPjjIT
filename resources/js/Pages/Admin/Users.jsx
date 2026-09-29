@@ -20,7 +20,7 @@ export default function Users({ users, filters, flash }) {
                 <div className="mb-5 flex flex-col gap-3 rounded-card border border-stone-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                     <form onSubmit={search} className="flex w-full max-w-xl gap-2">
                         <label className="relative flex-1"><span className="sr-only">Cari pengguna</span><Search size={18} className="pointer-events-none absolute left-3 top-3 text-stone-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border-stone-300 pl-10 text-sm" placeholder="Cari nama atau email" /></label>
-                        <button className="rounded-lg bg-brand-800 px-4 text-sm font-bold text-white hover:bg-brand-900">Cari</button>
+                        <button className="rounded-lg bg-brand-800 px-4 text-sm font-bold text-white hover:bg-brand-900 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">Cari</button>
                     </form>
                     <p className="shrink-0 text-sm text-stone-500"><strong className="text-ink">{users.total}</strong> pengguna</p>
                 </div>

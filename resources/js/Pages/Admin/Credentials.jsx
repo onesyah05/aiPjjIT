@@ -17,7 +17,7 @@ export default function Credentials({ credentials, flash }) {
                 <FlashBanner message={flash?.status} />
                 <div className="mb-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_18rem]">
                     <div className="flex items-start gap-3 rounded-card border border-brand-200 bg-brand-50 p-4 text-sm text-brand-950"><ShieldCheck size={20} className="mt-0.5 shrink-0 text-brand-700" /><div><p className="font-bold">Secret tetap terlindungi</p><p className="mt-1 leading-6 text-brand-800">Pemeriksaan dilakukan dari backend. Admin hanya melihat label, pemilik, preview tersamarkan, dan hasil koneksi.</p></div></div>
-                    <div className="rounded-card border border-stone-200 bg-white p-4"><p className="text-sm text-stone-500">Aktif di halaman ini</p><p className="mt-1 text-3xl font-bold text-ink">{activeCount}<span className="ml-1 text-base font-medium text-stone-400">/ {credentials.data.length}</span></p></div>
+                    <div className="rounded-card border border-stone-200 bg-white p-4"><p className="text-sm text-stone-500">Aktif di halaman ini</p><p className="mt-1 text-3xl font-bold text-ink">{activeCount}<span className="ml-1 text-base font-medium text-stone-600">/ {credentials.data.length}</span></p></div>
                 </div>
 
                 <div className="grid gap-4">

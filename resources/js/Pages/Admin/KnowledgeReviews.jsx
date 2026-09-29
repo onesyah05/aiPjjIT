@@ -48,7 +48,7 @@ export default function KnowledgeReviews({ versions, flash }) {
                                 </label>
 
                                 <div className="mt-4 flex flex-wrap gap-2">
-                                    <button type="button" onClick={() => review(version, 'approve')} className="inline-flex items-center gap-2 rounded-lg bg-brand-700 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-800"><Check size={15} />Setujui</button>
+                                    <button type="button" onClick={() => review(version, 'approve')} className="inline-flex items-center gap-2 rounded-lg bg-brand-700 px-4 py-2.5 text-xs font-semibold text-white hover:bg-brand-800 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300"><Check size={15} />Setujui</button>
                                     <button type="button" onClick={() => review(version, 'request_revision')} className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"><MessageSquareWarning size={15} />Minta revisi</button>
                                     <button type="button" onClick={() => review(version, 'reject')} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-xs font-semibold text-red-700 hover:bg-red-50"><X size={15} />Tolak</button>
                                 </div>

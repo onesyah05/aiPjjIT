@@ -1,3 +1,4 @@
+import ConfirmDialog from '@/Components/ConfirmDialog';
 import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -16,8 +17,12 @@ export default function Index({ conversations, filters }) {
     const [query, setQuery] = useState(filters.q || '');
     const newConversation = useForm({ course_id: '', mode: 'general', title: '' });
     const startConversation = () => newConversation.post(route('conversations.store'));
-    const rename = (conversation) => { const title = window.prompt('Judul percakapan', conversation.title || ''); if (title?.trim()) router.patch(route('conversations.update', conversation.id), { title: title.trim() }, { preserveScroll: true }); };
-    const remove = (conversation) => { if (window.confirm('Hapus percakapan ini?')) router.delete(route('conversations.destroy', conversation.id), { preserveScroll: true }); };
+    const [renaming, setRenaming] = useState(null);
+    const [deleting, setDeleting] = useState(null);
+    const rename = (conversation) => setRenaming(conversation);
+    const confirmRename = (title) => { router.patch(route('conversations.update', renaming.id), { title }, { preserveScroll: true }); setRenaming(null); };
+    const remove = (conversation) => setDeleting(conversation);
+    const confirmRemove = () => { router.delete(route('conversations.destroy', deleting.id), { preserveScroll: true }); setDeleting(null); };
     return (
         <AuthenticatedLayout
             header={<PageHeader eyebrow="Ruang belajar" title="Percakapan" description="Temukan kembali sesi lama, ubah judul, atau mulai diskusi baru." icon={MessageCircle} actions={<button type="button" onClick={startConversation} disabled={newConversation.processing} className="rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-900 disabled:cursor-wait disabled:opacity-60">{newConversation.processing ? 'Menyiapkan…' : 'Mulai percakapan'}</button>} />}
@@ -63,6 +68,8 @@ export default function Index({ conversations, filters }) {
                 )}
                 <Pagination data={conversations} label="percakapan" />
             </PageShell>
+            <ConfirmDialog show={renaming !== null} title="Ubah judul percakapan" showInput initialValue={renaming?.title || ''} inputPlaceholder="Judul percakapan" confirmLabel="Simpan" onCancel={() => setRenaming(null)} onConfirm={confirmRename} />
+            <ConfirmDialog show={deleting !== null} title="Hapus percakapan ini?" message="Tindakan ini tidak dapat dibatalkan." onCancel={() => setDeleting(null)} onConfirm={confirmRemove} />
         </AuthenticatedLayout>
     );
 }

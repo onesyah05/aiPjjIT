@@ -1,3 +1,4 @@
+import ConfirmDialog from '@/Components/ConfirmDialog';
 import EmptyState from '@/Components/EmptyState';
 import FlashBanner from '@/Components/FlashBanner';
 import PageHeader from '@/Components/PageHeader';
@@ -6,8 +7,11 @@ import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Index({ credentials, flash }) {
+    const [deleting, setDeleting] = useState(null);
+    const confirmRemove = () => { router.delete(route('ai-credentials.destroy', deleting.id)); setDeleting(null); };
     const form = useForm({ label: '', secret: '', daily_request_limit: '', community_enabled: true, consent: false });
 
     const submit = (event) => {
@@ -70,7 +74,7 @@ export default function Index({ credentials, flash }) {
                         </label>
                         {form.errors.consent && <p className="text-sm text-red-700">{form.errors.consent}</p>}
 
-                        <button type="submit" disabled={form.processing} className="w-full rounded-lg bg-brand-700 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="submit" disabled={form.processing} className="cred-submit w-full rounded-lg bg-brand-700 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50">
                             {form.processing ? 'Memvalidasi…' : 'Validasi dan simpan'}
                         </button>
                     </div>
@@ -104,7 +108,7 @@ export default function Index({ credentials, flash }) {
                                         <button type="button" onClick={() => toggle(credential)} className="rounded-lg border border-stone-300 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100">
                                             {credential.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
                                         </button>
-                                        <button type="button" onClick={() => window.confirm('Hapus credential ini? Tindakan ini tidak dapat dibatalkan.') && router.delete(route('ai-credentials.destroy', credential.id))} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50">
+                                        <button type="button" onClick={() => setDeleting(credential)} className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50">
                                             Hapus
                                         </button>
                                     </div>
@@ -117,6 +121,7 @@ export default function Index({ credentials, flash }) {
                 </section>
                 </div>
             </PageShell>
+            <ConfirmDialog show={deleting !== null} title="Hapus credential ini?" message="Tindakan ini tidak dapat dibatalkan." onCancel={() => setDeleting(null)} onConfirm={confirmRemove} />
         </AuthenticatedLayout>
     );
 }
