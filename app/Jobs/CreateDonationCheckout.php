@@ -152,6 +152,9 @@ class CreateDonationCheckout implements ShouldBeEncrypted, ShouldQueue
             'https://discord.com/api/v10/webhooks/'.$this->applicationId.'/'.$this->interactionToken.'/messages/@original',
             ['content' => $message, 'components' => [], 'allowed_mentions' => ['parse' => []]],
         )->throw();
+
+        DeleteDonationInteractionResponse::dispatch($this->applicationId, $this->interactionToken)
+            ->delay(now()->addMinute());
     }
 
     private function discord(): PendingRequest

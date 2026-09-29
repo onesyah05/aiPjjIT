@@ -3,15 +3,24 @@
 namespace Tests\Feature;
 
 use App\Jobs\CreateDonationCheckout;
+use App\Jobs\DeleteDonationInteractionResponse;
 use App\Models\Donation;
 use App\Services\PakasirClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class DonationCheckoutTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Queue::fake([DeleteDonationInteractionResponse::class]);
+    }
 
     public function test_checkout_creates_qris_and_sends_the_image_by_dm(): void
     {
@@ -48,6 +57,10 @@ class DonationCheckoutTest extends TestCase
             && str_contains($request->url(), '/webhooks/222222222222222222/interaction-token/messages/@original')
             && str_contains($request['content'], 'QRIS SANDBOX')
             && str_contains($request['content'], 'Jangan transfer uang sungguhan'));
+        Queue::assertPushed(DeleteDonationInteractionResponse::class, fn (DeleteDonationInteractionResponse $job): bool => $job->applicationId === '222222222222222222'
+            && $job->interactionToken === 'interaction-token'
+            && $job->queue === 'discord'
+            && $job->delay->between(now()->addSeconds(59), now()->addSeconds(61)));
     }
 
     public function test_retry_does_not_create_another_transaction_or_dm(): void
@@ -97,6 +110,7 @@ class DonationCheckoutTest extends TestCase
         Http::assertSent(fn ($request) => $request->method() === 'PATCH'
             && str_contains($request->url(), '/webhooks/222222222222222222/interaction-token/messages/@original')
             && str_contains($request['content'], 'mode proyek Pakasir tidak sesuai'));
+        Queue::assertPushed(DeleteDonationInteractionResponse::class, 1);
     }
 
     public function test_checkout_accepts_documented_expired_at_field(): void
@@ -128,6 +142,7 @@ class DonationCheckoutTest extends TestCase
         Http::assertSent(fn ($request) => $request->method() === 'PATCH'
             && str_contains($request['content'], 'QRIS SANDBOX')
             && str_contains($request['content'], 'bukan pembayaran nyata'));
+        Queue::assertPushed(DeleteDonationInteractionResponse::class, 1);
     }
 
     private function donation(): Donation

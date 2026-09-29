@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\CreateDonationCheckout;
+use App\Jobs\DeleteDonationInteractionResponse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Testing\TestResponse;
@@ -26,6 +27,7 @@ class DiscordInteractionControllerTest extends TestCase
         config()->set('services.pakasir.slug', 'test-project');
         config()->set('services.pakasir.api_key', 'test-key');
         config()->set('services.pakasir.webhook_secret', 'test-secret');
+        Queue::fake([DeleteDonationInteractionResponse::class]);
     }
 
     public function test_rejects_unsigned_interactions(): void
@@ -73,6 +75,10 @@ class DiscordInteractionControllerTest extends TestCase
         ]))->assertJsonPath('type', 4)->assertJsonPath('data.flags', 64);
 
         $this->assertDatabaseCount('donations', 0);
+        Queue::assertPushed(DeleteDonationInteractionResponse::class, fn (DeleteDonationInteractionResponse $job): bool => $job->applicationId === '222222222222222222'
+            && $job->interactionToken === 'test-token'
+            && $job->queue === 'discord'
+            && $job->delay->between(now()->addSeconds(59), now()->addSeconds(61)));
     }
 
     public function test_amount_above_qris_limit_does_not_create_donation(): void

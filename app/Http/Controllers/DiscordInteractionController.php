@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\CreateDonationCheckout;
+use App\Jobs\DeleteDonationInteractionResponse;
 use App\Models\Donation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class DiscordInteractionController extends Controller
 
         if (($interaction['guild_id'] ?? '') !== (string) config('services.discord.guild_id')
             || ($interaction['channel_id'] ?? '') !== (string) config('services.discord.donation_channel_id')) {
-            return $this->ephemeral('Donasi hanya tersedia di channel leaderboard.');
+            return $this->ephemeral($interaction, 'Donasi hanya tersedia di channel leaderboard.');
         }
 
         if (($interaction['type'] ?? null) === 3 && ($interaction['data']['custom_id'] ?? '') === 'donation:open') {
@@ -42,7 +43,7 @@ class DiscordInteractionController extends Controller
         }
 
         if (($interaction['type'] ?? null) !== 5 || ($interaction['data']['custom_id'] ?? '') !== 'donation:submit') {
-            return $this->ephemeral('Interaksi tidak dikenal.');
+            return $this->ephemeral($interaction, 'Interaksi tidak dikenal.');
         }
 
         $values = [];
@@ -60,21 +61,21 @@ class DiscordInteractionController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->ephemeral('Nominal QRIS harus Rp500–Rp10.000.000; periksa juga pesan dan URL gambar.');
+            return $this->ephemeral($interaction, 'Nominal QRIS harus Rp500–Rp10.000.000; periksa juga pesan dan URL gambar.');
         }
 
         $validated = $validator->validated();
         if (filled($validated['image_url'] ?? null) && (int) $validated['amount'] < 25000) {
-            return $this->ephemeral('URL gambar hanya tersedia untuk donasi minimal Rp25.000.');
+            return $this->ephemeral($interaction, 'URL gambar hanya tersedia untuk donasi minimal Rp25.000.');
         }
 
         if (! filled(config('services.pakasir.slug')) || ! filled(config('services.pakasir.api_key')) || ! filled(config('services.pakasir.webhook_secret'))) {
-            return $this->ephemeral('Pembayaran donasi belum tersedia. Silakan coba lagi nanti.');
+            return $this->ephemeral($interaction, 'Pembayaran donasi belum tersedia. Silakan coba lagi nanti.');
         }
 
         $user = $interaction['member']['user'] ?? $interaction['user'] ?? [];
         if (! preg_match('/^\d{17,20}$/', (string) ($user['id'] ?? ''))) {
-            return $this->ephemeral('Identitas Discord tidak valid.');
+            return $this->ephemeral($interaction, 'Identitas Discord tidak valid.');
         }
 
         $donation = Donation::query()->firstOrCreate(
@@ -135,8 +136,16 @@ class DiscordInteractionController extends Controller
         ]];
     }
 
-    private function ephemeral(string $message): JsonResponse
+    /** @param array<string, mixed> $interaction */
+    private function ephemeral(array $interaction, string $message): JsonResponse
     {
+        if (filled($interaction['application_id'] ?? null) && filled($interaction['token'] ?? null)) {
+            DeleteDonationInteractionResponse::dispatch(
+                (string) $interaction['application_id'],
+                (string) $interaction['token'],
+            )->delay(now()->addMinute());
+        }
+
         return response()->json(['type' => 4, 'data' => ['content' => $message, 'flags' => 64]]);
     }
 }
