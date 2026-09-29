@@ -10,7 +10,7 @@ export default function Dashboard({ stats, credentialHealth, recentRequests, dai
     const maxDailyRequests = Math.max(...dailyRequests.map((day) => day.total), 1);
 
     return (
-        <AuthenticatedLayout header={<PageHeader eyebrow="Pusat kendali" title="Ringkasan admin" description="Pantau kesehatan layanan, aktivitas AI, dan pekerjaan moderasi dari satu tempat." icon={Gauge} actions={<><Link href={route('admin.users.index')} className="rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-bold text-stone-700 hover:border-brand-400 hover:text-brand-800">Kelola pengguna</Link><Link href={route('admin.audit-logs.index')} className="rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-900">Buka audit log</Link></>} />}>
+        <AuthenticatedLayout header={<PageHeader eyebrow="Pusat kendali" title="Ringkasan admin" description="Pantau kesehatan layanan, aktivitas AI, dan pekerjaan moderasi dari satu tempat." icon={Gauge} actions={<><Link href={route('admin.users.index')} className="rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-bold text-stone-700 hover:border-brand-400 hover:text-brand-800">Kelola pengguna</Link><Link href={route('admin.audit-logs.index')} className="rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-900 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">Buka audit log</Link></>} />}>
             <Head title="Admin dashboard" />
             <PageShell>
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan sistem">

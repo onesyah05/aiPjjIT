@@ -36,7 +36,7 @@ export default function Index({ auth, knowledge, courses, filters, counts, flash
                                 Kelola mata kuliah
                             </Link>
                         )}
-                        <button type="button" onClick={() => setFormOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900">
+                        <button type="button" onClick={() => setFormOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">
                             <CirclePlus size={19} strokeWidth={1.8} aria-hidden="true" />
                             Tambah knowledge
                         </button>
@@ -51,7 +51,7 @@ export default function Index({ auth, knowledge, courses, filters, counts, flash
                 <section aria-labelledby="library-heading">
                     <form onSubmit={(event) => { event.preventDefault(); router.get(route('knowledge.index'), { context: filters.context === 'all' ? undefined : filters.context, q: query }, { preserveState: true }); }} className="mb-4 flex max-w-xl gap-2">
                         <div className="relative flex-1"><Search size={18} className="absolute left-3 top-3 text-stone-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} className="w-full rounded-lg border-stone-300 pl-10" placeholder="Cari judul atau deskripsi knowledge" /></div>
-                        <button className="rounded-lg bg-brand-800 px-4 text-sm font-bold text-white">Cari</button>
+                        <button className="rounded-lg bg-brand-800 px-4 text-sm font-bold text-white dark:bg-brand-200 dark:text-stone-900">Cari</button>
                     </form>
                     <div className="rounded-card border border-stone-200 bg-white p-4 shadow-sm sm:p-5">
                         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -64,10 +64,10 @@ export default function Index({ auth, knowledge, courses, filters, counts, flash
                                     const active = filters.context === key;
 
                                     return (
-                                        <Link key={key} href={route('knowledge.index', key === 'all' ? {} : { context: key })} preserveScroll className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold transition-colors ${active ? 'border-brand-800 bg-brand-800 text-white' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-ink'}`} aria-current={active ? 'page' : undefined}>
+                                        <Link key={key} href={route('knowledge.index', key === 'all' ? {} : { context: key })} preserveScroll className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-semibold transition-colors ${active ? 'border-brand-800 bg-brand-800 text-white dark:border-transparent dark:bg-brand-200 dark:text-stone-900' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-ink'}`} aria-current={active ? 'page' : undefined}>
                                             <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
                                             <span>{label}</span>
-                                            <span className={`min-w-5 text-center text-xs ${active ? 'text-brand-200' : 'text-stone-400'}`}>{count}</span>
+                                            <span className={`min-w-5 text-center text-xs ${active ? 'text-brand-200 dark:text-stone-900' : 'text-stone-600'}`}>{count}</span>
                                         </Link>
                                     );
                                 })}
@@ -111,7 +111,7 @@ export default function Index({ auth, knowledge, courses, filters, counts, flash
                     ) : (
                         <div className="mt-6">
                             <EmptyState title="Belum ada knowledge di kategori ini" description="Pilih kategori lain atau tambahkan materi baru." action={(
-                                <button type="button" onClick={() => setFormOpen(true)} className="mx-auto flex min-h-11 items-center gap-2 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900">
+                                <button type="button" onClick={() => setFormOpen(true)} className="mx-auto flex min-h-11 items-center gap-2 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">
                                     <CirclePlus size={18} aria-hidden="true" />
                                     Tambah knowledge
                                 </button>

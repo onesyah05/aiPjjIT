@@ -62,31 +62,31 @@ export default function Dashboard({ auth, courses, recentConversations, recentKn
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,.75fr)]">
-                    <section className="relative overflow-hidden rounded-card bg-brand-950 text-white shadow-[0_20px_55px_rgba(6,18,38,0.18)]" aria-labelledby="quick-start-heading">
-                        <div className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full border border-white/10" />
+                    <section className="relative overflow-hidden rounded-card bg-brand-950 text-white shadow-[0_20px_55px_rgba(6,18,38,0.18)] dark:bg-[#e5ecf7] dark:text-stone-900" aria-labelledby="quick-start-heading">
+                        <div className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full border border-white/10 dark:border-stone-400" />
                         <div className="pointer-events-none absolute -right-5 -top-20 h-52 w-52 rounded-full bg-brand-600/20 blur-3xl" />
 
                         <div className="relative p-6 sm:p-8">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-xs font-semibold text-brand-100">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-xs font-semibold text-brand-100 dark:border-stone-400 dark:bg-[#ffffff] dark:text-stone-900">
                                 <Bot size={15} aria-hidden="true" />
                                 Tutor berbasis knowledge komunitas
                             </div>
                             <h2 id="quick-start-heading" className="mt-5 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
                                 Apa yang ingin kamu pelajari hari ini?
                             </h2>
-                            <p className="mt-3 max-w-2xl text-sm leading-7 text-brand-200">
+                            <p className="mt-3 max-w-2xl text-sm leading-7 text-brand-200 dark:text-stone-900/70">
                                 Pilih mata kuliah dan mode jawaban. Tutor akan menyesuaikan konteks sebelum percakapan dimulai.
                             </p>
 
-                            <form onSubmit={createConversation} className="mt-7 rounded-xl border border-white/15 bg-white/[0.07] p-4 backdrop-blur-sm">
+                            <form onSubmit={createConversation} className="mt-7 rounded-xl border border-white/15 bg-white/[0.07] p-4 backdrop-blur-sm dark:border-stone-400 dark:bg-[#ffffff]">
                                 <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_13rem]">
                                     <div>
-                                        <label className="mb-2 block text-xs font-semibold text-brand-100" htmlFor="dashboard-course">Mata kuliah</label>
+                                        <label className="mb-2 block text-xs font-semibold text-brand-100 dark:text-stone-900" htmlFor="dashboard-course">Mata kuliah</label>
                                         <select
                                             id="dashboard-course"
                                             value={conversation.data.course_id}
                                             onChange={(event) => conversation.setData('course_id', event.target.value)}
-                                            className="min-h-12 w-full rounded-ui border-white/20 bg-white text-sm text-ink shadow-sm focus:border-brand-300 focus:ring-brand-300"
+                                            className="min-h-12 w-full rounded-ui border-white/20 bg-white text-sm text-ink shadow-sm focus:border-brand-300 focus:ring-brand-300 dark:border-stone-400 dark:bg-[#ffffff] dark:text-stone-900"
                                         >
                                             <option value="">Semua mata kuliah</option>
                                             {courses.map((course) => <option key={course.id} value={course.id}>{course.code} — {course.name}</option>)}
@@ -94,12 +94,12 @@ export default function Dashboard({ auth, courses, recentConversations, recentKn
                                     </div>
 
                                     <div>
-                                        <label className="mb-2 block text-xs font-semibold text-brand-100" htmlFor="dashboard-mode">Mode jawaban</label>
+                                        <label className="mb-2 block text-xs font-semibold text-brand-100 dark:text-stone-900" htmlFor="dashboard-mode">Mode jawaban</label>
                                         <select
                                             id="dashboard-mode"
                                             value={conversation.data.mode}
                                             onChange={(event) => conversation.setData('mode', event.target.value)}
-                                            className="min-h-12 w-full rounded-ui border-white/20 bg-white text-sm text-ink shadow-sm focus:border-brand-300 focus:ring-brand-300"
+                                            className="min-h-12 w-full rounded-ui border-white/20 bg-white text-sm text-ink shadow-sm focus:border-brand-300 focus:ring-brand-300 dark:border-stone-400 dark:bg-[#ffffff] dark:text-stone-900"
                                         >
                                             <option value="general">Jawaban umum</option>
                                             <option value="knowledge_only">Hanya knowledge</option>
@@ -108,11 +108,11 @@ export default function Dashboard({ auth, courses, recentConversations, recentKn
                                 </div>
 
                                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <p className="text-xs leading-5 text-brand-200">Sumber akan ditampilkan pada jawaban agar dapat kamu periksa.</p>
+                                    <p className="text-xs leading-5 text-brand-200 dark:text-stone-900/70">Sumber akan ditampilkan pada jawaban agar dapat kamu periksa.</p>
                                     <button
                                         type="submit"
                                         disabled={conversation.processing}
-                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-ui bg-white px-5 text-sm font-bold text-brand-950 shadow-sm transition hover:bg-brand-50 disabled:cursor-wait disabled:opacity-60"
+                                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-ui bg-white px-5 text-sm font-bold text-brand-950 shadow-sm transition hover:bg-brand-50 disabled:cursor-wait disabled:opacity-60 dark:bg-brand-800 dark:text-white"
                                     >
                                         {conversation.processing ? 'Menyiapkan…' : 'Mulai percakapan'}
                                         {!conversation.processing && <ArrowRight size={17} aria-hidden="true" />}
@@ -121,11 +121,11 @@ export default function Dashboard({ auth, courses, recentConversations, recentKn
                             </form>
                         </div>
 
-                        <dl className="relative grid grid-cols-3 border-t border-white/10 bg-black/10">
+                        <dl className="relative grid grid-cols-3 border-t border-white/10 bg-black/10 dark:border-stone-400 dark:bg-brand-950/10">
                             {overview.map(({ label, value, icon: Icon }) => (
-                                <div key={label} className="border-r border-white/10 px-4 py-4 last:border-r-0 sm:px-6">
-                                    <dt className="flex items-center gap-2 text-[11px] font-medium text-brand-300 sm:text-xs"><Icon size={14} aria-hidden="true" /><span className="truncate">{label}</span></dt>
-                                    <dd className="mt-1 text-xl font-bold text-white sm:text-2xl">{value}</dd>
+                                <div key={label} className="border-r border-white/10 px-4 py-4 last:border-r-0 dark:border-stone-400 sm:px-6">
+                                    <dt className="flex items-center gap-2 text-[11px] font-medium text-brand-300 dark:text-stone-900/70 sm:text-xs"><Icon size={14} aria-hidden="true" /><span className="truncate">{label}</span></dt>
+                                    <dd className="mt-1 text-xl font-bold text-white dark:text-stone-900 sm:text-2xl">{value}</dd>
                                 </div>
                             ))}
                         </dl>
@@ -134,7 +134,7 @@ export default function Dashboard({ auth, courses, recentConversations, recentKn
                     <section className="overflow-hidden rounded-card border border-stone-200 bg-white shadow-[0_10px_30px_rgba(17,28,45,0.06)]" aria-labelledby="dashboard-leaderboard-heading">
                         <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-5 py-5 sm:px-6">
                             <div>
-                                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-clay">
+                                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#7c5e1d] dark:text-amber-200">
                                     <Trophy size={15} aria-hidden="true" />
                                     Komunitas
                                 </div>
@@ -158,7 +158,7 @@ export default function Dashboard({ auth, courses, recentConversations, recentKn
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-bold text-brand-800">{leader.score}</p>
-                                            <p className="text-[10px] uppercase tracking-wide text-stone-400">poin</p>
+                                            <p className="text-[10px] uppercase tracking-wide text-stone-500">poin</p>
                                         </div>
                                     </li>
                                 ))}

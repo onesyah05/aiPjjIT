@@ -7,9 +7,9 @@ const fieldClassName = 'mt-2 w-full rounded-lg border-stone-300 bg-white text-sm
 
 function OptionCard({ checked, description, icon: Icon, label, name, onChange, value }) {
     return (
-        <label className={`relative flex cursor-pointer gap-3 rounded-lg border p-3.5 transition-colors focus-within:ring-2 focus-within:ring-brand-600 focus-within:ring-offset-2 ${checked ? 'border-brand-700 bg-brand-50' : 'border-stone-200 bg-white hover:border-stone-300'}`}>
+        <label className={`relative flex cursor-pointer gap-3 rounded-lg border p-3.5 transition-colors focus-within:ring-2 focus-within:ring-brand-600 focus-within:ring-offset-2 ${checked ? 'border-brand-700 bg-brand-50 dark:border-brand-400' : 'border-stone-200 bg-white hover:border-stone-300'}`}>
             <input type="radio" name={name} value={value} checked={checked} onChange={() => onChange(value)} className="sr-only" />
-            <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${checked ? 'bg-brand-800 text-white' : 'bg-stone-100 text-stone-600'}`}>
+            <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${checked ? 'bg-brand-800 text-white dark:bg-brand-200 dark:text-stone-900' : 'bg-stone-100 text-stone-600'}`}>
                 <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
             </span>
             <span className="min-w-0">
@@ -17,7 +17,7 @@ function OptionCard({ checked, description, icon: Icon, label, name, onChange, v
                     {label}
                     {checked && <Check size={15} strokeWidth={2.5} className="text-brand-700" aria-hidden="true" />}
                 </span>
-                <span className="mt-0.5 block text-xs leading-5 text-stone-500">{description}</span>
+                <span className="mt-0.5 block text-xs leading-5 text-stone-600">{description}</span>
             </span>
         </label>
     );
@@ -125,7 +125,7 @@ export default function KnowledgeFormDialog({ courses, open, onClose }) {
                                     </label>
 
                                     <label className="block text-sm font-semibold text-stone-800">
-                                        Deskripsi <span className="font-normal text-stone-400">(opsional)</span>
+                                        Deskripsi <span className="font-normal text-stone-600">(opsional)</span>
                                         <textarea value={form.data.description} onChange={(event) => form.setData('description', event.target.value)} rows="3" className={fieldClassName} placeholder="Ringkasan singkat materi" />
                                         {form.errors.description && <span className="mt-2 block text-sm font-normal text-red-700">{form.errors.description}</span>}
                                     </label>
@@ -147,7 +147,7 @@ export default function KnowledgeFormDialog({ courses, open, onClose }) {
                                             <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
                                             Tulis langsung
                                         </button>
-                                        <button type="button" role="tab" aria-selected={inputMode === 'upload'} onClick={() => changeInputMode('upload')} className={`flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors ${inputMode === 'upload' ? 'bg-white text-ink shadow-sm' : 'text-stone-500 hover:text-stone-800'}`}>
+                                        <button type="button" role="tab" aria-selected={inputMode === 'upload'} onClick={() => changeInputMode('upload')} className={`flex min-h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors ${inputMode === 'upload' ? 'bg-white text-ink shadow-sm' : 'text-stone-600 hover:text-stone-800'}`}>
                                             <Upload size={17} strokeWidth={1.8} aria-hidden="true" />
                                             Unggah .md
                                         </button>
@@ -160,13 +160,13 @@ export default function KnowledgeFormDialog({ courses, open, onClose }) {
                                             <span className="mt-2 block text-xs font-normal text-stone-500">Teks biasa dan sintaks Markdown sama-sama didukung.</span>
                                         </label>
                                     ) : (
-                                        <label className="mt-3 flex min-h-96 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-300 bg-stone-50 px-6 py-8 text-center transition-colors hover:border-brand-500 hover:bg-brand-50/50">
-                                            <span className="grid h-12 w-12 place-items-center rounded-lg bg-white text-brand-800 shadow-sm ring-1 ring-stone-200">
+                                        <label className="mt-3 flex min-h-96 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-stone-300 bg-stone-50 px-6 py-8 text-center transition-colors hover:border-brand-500 hover:bg-brand-50/50 dark:hover:border-brand-300">
+                                            <span className="grid h-12 w-12 place-items-center rounded-lg bg-white text-brand-800 shadow-sm ring-1 ring-stone-200 dark:text-brand-100 dark:ring-white/15">
                                                 <Upload size={23} strokeWidth={1.8} aria-hidden="true" />
                                             </span>
                                             <span className="mt-4 text-sm font-semibold text-ink">Pilih file Markdown</span>
                                             <span className="mt-1 text-xs text-stone-500">Hanya .md, maksimal 2 MB</span>
-                                            {form.data.file && <span className="mt-4 max-w-full truncate rounded-md bg-brand-100 px-3 py-1.5 text-xs font-semibold text-brand-900">{form.data.file.name}</span>}
+                                            {form.data.file && <span className="mt-4 max-w-full truncate rounded-md bg-brand-100 px-3 py-1.5 text-xs font-semibold text-brand-900 dark:bg-white/10 dark:text-brand-200">{form.data.file.name}</span>}
                                             <input ref={fileInput} type="file" accept=".md,text/markdown,text/plain" onChange={(event) => form.setData('file', event.target.files?.[0] || null)} className="sr-only" required />
                                         </label>
                                     )}
@@ -178,7 +178,7 @@ export default function KnowledgeFormDialog({ courses, open, onClose }) {
                                 <p className="text-xs leading-5 text-stone-500">Materi bersama akan masuk antrean review sebelum dapat digunakan anggota lain.</p>
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row">
                                     <button type="button" onClick={onClose} className="min-h-11 rounded-lg border border-stone-300 bg-white px-5 text-sm font-semibold text-stone-700 hover:bg-stone-100">Batal</button>
-                                    <button type="submit" disabled={form.processing} className="min-h-11 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 disabled:cursor-wait disabled:opacity-60">
+                                    <button type="submit" disabled={form.processing} className="min-h-11 rounded-lg bg-brand-800 px-5 text-sm font-bold text-white hover:bg-brand-900 disabled:cursor-wait disabled:opacity-60 dark:bg-brand-200 dark:text-stone-900 dark:hover:bg-brand-300">
                                         {form.processing ? 'Menyimpan…' : 'Simpan knowledge'}
                                     </button>
                                 </div>
