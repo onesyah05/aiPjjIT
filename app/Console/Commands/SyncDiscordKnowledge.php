@@ -35,6 +35,7 @@ class SyncDiscordKnowledge extends Command
 
         if (empty($channelIds)) {
             $this->warn('No Discord channels configured for syncing.');
+
             return self::SUCCESS;
         }
 
@@ -45,15 +46,16 @@ class SyncDiscordKnowledge extends Command
         );
 
         $this->info('Starting Discord knowledge sync...');
-        
+
         $activeThreads = $discord->getActiveThreads($guildId);
 
         foreach ($channelIds as $channelId) {
             $this->info("Fetching info for channel: {$channelId}");
             $channel = $discord->getChannel($channelId);
 
-            if (!$channel) {
+            if (! $channel) {
                 $this->warn("Skipping channel {$channelId}, not found or inaccessible.");
+
                 continue;
             }
 
@@ -63,18 +65,18 @@ class SyncDiscordKnowledge extends Command
             // 15 = GUILD_FORUM
             if ($type === 15) {
                 $this->info("Processing Forum Channel: {$channelName}");
-                
+
                 // Get threads for this forum
                 $archivedThreads = $discord->getArchivedThreads($channelId);
-                $forumThreads = array_filter($activeThreads, fn($t) => ($t['parent_id'] ?? null) == $channelId);
-                
+                $forumThreads = array_filter($activeThreads, fn ($t) => ($t['parent_id'] ?? null) == $channelId);
+
                 $allThreads = array_merge($forumThreads, $archivedThreads);
-                
+
                 foreach ($allThreads as $thread) {
                     $this->processThread($discord, $systemUser, $thread['id'], "Forum: {$channelName} - {$thread['name']}");
                 }
 
-            } else { 
+            } else {
                 // Regular channel
                 $this->info("Processing Regular Text Channel: {$channelName}");
                 $this->processRegularChannel($discord, $systemUser, $channelId, "Channel: {$channelName}");
@@ -90,7 +92,7 @@ class SyncDiscordKnowledge extends Command
     {
         $this->info("Fetching messages for thread: {$title}");
         $messages = $discord->getChannelMessages($threadId, 1000);
-        
+
         if (empty($messages)) {
             return;
         }
@@ -98,14 +100,14 @@ class SyncDiscordKnowledge extends Command
         // Discord returns messages from newest to oldest. Reverse to chronological.
         $messages = array_reverse($messages);
 
-        $content = "";
+        $content = '';
         foreach ($messages as $msg) {
             $text = trim($msg['content'] ?? '');
-            
-            $attachments = "";
-            if (!empty($msg['attachments'])) {
+
+            $attachments = '';
+            if (! empty($msg['attachments'])) {
                 foreach ($msg['attachments'] as $attachment) {
-                    if (!empty($attachment['url'])) {
+                    if (! empty($attachment['url'])) {
                         $url = $attachment['url'];
                         $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', parse_url($url, PHP_URL_PATH));
                         if ($isImage) {
@@ -116,22 +118,24 @@ class SyncDiscordKnowledge extends Command
                     }
                 }
             }
-            if (!empty($msg['embeds'])) {
+            if (! empty($msg['embeds'])) {
                 foreach ($msg['embeds'] as $embed) {
-                    if (!empty($embed['image']['url'])) {
+                    if (! empty($embed['image']['url'])) {
                         $attachments .= "\n\n![Embed Image]({$embed['image']['url']})";
-                    } elseif (!empty($embed['thumbnail']['url'])) {
+                    } elseif (! empty($embed['thumbnail']['url'])) {
                         $attachments .= "\n\n![Embed Thumbnail]({$embed['thumbnail']['url']})";
                     }
-                    if (!empty($embed['url'])) {
+                    if (! empty($embed['url'])) {
                         $embedTitle = $embed['title'] ?? 'Link';
                         $attachments .= "\n\n[{$embedTitle}]({$embed['url']})";
                     }
                 }
             }
 
-            if (empty($text) && empty($attachments)) continue;
-            
+            if (empty($text) && empty($attachments)) {
+                continue;
+            }
+
             $author = $msg['author']['username'] ?? 'Unknown';
             $content .= "**{$author}**: {$text}{$attachments}\n\n";
         }
@@ -140,7 +144,7 @@ class SyncDiscordKnowledge extends Command
             return;
         }
 
-        $this->saveKnowledge($systemUser, $title, "Auto-synced forum thread", $content, $threadId);
+        $this->saveKnowledge($systemUser, $title, 'Auto-synced forum thread', $content, $threadId);
     }
 
     private function processRegularChannel(DiscordService $discord, User $systemUser, string $channelId, string $title)
@@ -155,14 +159,14 @@ class SyncDiscordKnowledge extends Command
         // Discord returns messages from newest to oldest. Reverse to chronological.
         $messages = array_reverse($messages);
 
-        $content = "";
+        $content = '';
         foreach ($messages as $msg) {
             $text = trim($msg['content'] ?? '');
-            
-            $attachments = "";
-            if (!empty($msg['attachments'])) {
+
+            $attachments = '';
+            if (! empty($msg['attachments'])) {
                 foreach ($msg['attachments'] as $attachment) {
-                    if (!empty($attachment['url'])) {
+                    if (! empty($attachment['url'])) {
                         $url = $attachment['url'];
                         $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', parse_url($url, PHP_URL_PATH));
                         if ($isImage) {
@@ -173,22 +177,24 @@ class SyncDiscordKnowledge extends Command
                     }
                 }
             }
-            if (!empty($msg['embeds'])) {
+            if (! empty($msg['embeds'])) {
                 foreach ($msg['embeds'] as $embed) {
-                    if (!empty($embed['image']['url'])) {
+                    if (! empty($embed['image']['url'])) {
                         $attachments .= "\n\n![Embed Image]({$embed['image']['url']})";
-                    } elseif (!empty($embed['thumbnail']['url'])) {
+                    } elseif (! empty($embed['thumbnail']['url'])) {
                         $attachments .= "\n\n![Embed Thumbnail]({$embed['thumbnail']['url']})";
                     }
-                    if (!empty($embed['url'])) {
+                    if (! empty($embed['url'])) {
                         $embedTitle = $embed['title'] ?? 'Link';
                         $attachments .= "\n\n[{$embedTitle}]({$embed['url']})";
                     }
                 }
             }
 
-            if (empty($text) && empty($attachments)) continue;
-            
+            if (empty($text) && empty($attachments)) {
+                continue;
+            }
+
             $author = $msg['author']['username'] ?? 'Unknown';
             $content .= "**{$author}**: {$text}{$attachments}\n\n";
         }
@@ -197,14 +203,17 @@ class SyncDiscordKnowledge extends Command
             return;
         }
 
-        $this->saveKnowledge($systemUser, $title, "Auto-synced regular channel", $content, $channelId);
+        $this->saveKnowledge($systemUser, $title, 'Auto-synced regular channel', $content, $channelId);
     }
 
     private function saveKnowledge(User $systemUser, string $title, string $description, string $content, string $discordId)
     {
         $uniqueTitle = "[Discord {$discordId}] {$title}";
 
-        $knowledge = Knowledge::where('title', $uniqueTitle)->first();
+        // Identify the knowledge by the immutable Discord channel/thread id so
+        // renaming the source never forks it into a duplicate.
+        $knowledge = Knowledge::where('discord_source_id', $discordId)->first()
+            ?? Knowledge::where('title', $uniqueTitle)->first();
 
         if ($knowledge) {
             // Update if content changed
@@ -231,6 +240,7 @@ class SyncDiscordKnowledge extends Command
                 'user_id' => $systemUser->id,
                 'course_id' => null,
                 'title' => $uniqueTitle,
+                'discord_source_id' => $discordId,
                 'description' => $description,
                 'visibility' => 'community',
                 'status' => 'approved',
