@@ -17,7 +17,7 @@ return new class extends Migration
         });
 
         // Discord sync titles look like "[Discord {snowflake}] {label}".
-        DB::table('knowledges')->where('title', 'like', '[Discord %]')->orderBy('id')->chunkById(500, function ($knowledges): void {
+        DB::table('knowledges')->where('title', 'like', '[Discord%')->orderBy('id')->chunkById(500, function ($knowledges): void {
             foreach ($knowledges as $knowledge) {
                 if (preg_match('/^\[Discord (\d+)\]/', (string) $knowledge->title, $matches)) {
                     DB::table('knowledges')
