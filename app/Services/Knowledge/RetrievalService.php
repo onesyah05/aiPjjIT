@@ -205,12 +205,29 @@ class RetrievalService
         int $limit,
         bool $prioritizeWhatsAppLinks,
     ): Collection {
-        return $vectorResults
-            ->concat($keywordResults)
-            ->groupBy(fn (array $result): int => $result['chunk']->id)
-            ->map(function (Collection $matches): array {
-                $result = $matches->first();
-                $result['score'] = (float) $matches->max('score');
+        // Reciprocal Rank Fusion: vector similarity and the keyword formula
+        // live on incomparable scales, so merge by list position instead.
+        $fused = collect();
+        $rankWeight = fn (int $position): float => 1 / (60 + $position);
+
+        $vectorResults->values()->each(function (array $result, int $position) use (&$fused, $rankWeight): void {
+            $id = $result['chunk']->id;
+            $entry = $fused->get($id, ['result' => $result, 'rrf' => 0.0]);
+            $entry['rrf'] += $rankWeight($position + 1);
+            $fused->put($id, $entry);
+        });
+
+        $keywordResults->values()->each(function (array $result, int $position) use (&$fused, $rankWeight): void {
+            $id = $result['chunk']->id;
+            $entry = $fused->get($id, ['result' => $result, 'rrf' => 0.0]);
+            $entry['rrf'] += $rankWeight($position + 1);
+            $fused->put($id, $entry);
+        });
+
+        return $fused
+            ->map(function (array $entry): array {
+                $result = $entry['result'];
+                $result['score'] = round($entry['rrf'], 6);
 
                 return $result;
             })
