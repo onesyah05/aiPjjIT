@@ -40,6 +40,7 @@ class GeminiService
 
         if (! str_contains(mb_strtolower($response->header('Content-Type')), 'text/event-stream')) {
             $content = (string) data_get($response->json(), 'candidates.0.content.parts.0.text', '');
+            $this->assertNaturalFinish((string) data_get($response->json(), 'candidates.0.finishReason', 'STOP'), $content);
 
             if ($content !== '') {
                 yield $content;
@@ -50,6 +51,8 @@ class GeminiService
 
         $body = $response->toPsrResponse()->getBody();
         $buffer = '';
+        $finishReason = 'STOP';
+        $generated = '';
 
         while (! $body->eof()) {
             $buffer .= $body->read(8192);
@@ -57,21 +60,58 @@ class GeminiService
             $buffer = array_pop($events) ?? '';
 
             foreach ($events as $event) {
+                $finishReason = $this->finishReasonFromEvent($event) ?? $finishReason;
                 $content = $this->contentFromEvent($event);
 
                 if ($content !== '') {
+                    $generated .= $content;
                     yield $content;
                 }
             }
         }
 
         if ($buffer !== '') {
+            $finishReason = $this->finishReasonFromEvent($buffer) ?? $finishReason;
             $content = $this->contentFromEvent($buffer);
 
             if ($content !== '') {
+                $generated .= $content;
                 yield $content;
             }
         }
+
+        $this->assertNaturalFinish($finishReason, $generated);
+    }
+
+    /**
+     * A SAFETY/RECITATION/SPII stop truncates the answer mid-sentence; treat it
+     * as a provider failure so the caller rotates to another credential
+     * instead of sending a cut-off reply.
+     */
+    private function assertNaturalFinish(string $finishReason, string $generated): void
+    {
+        if (in_array($finishReason, ['STOP', 'MAX_TOKENS', ''], true) || $generated === '') {
+            return;
+        }
+
+        throw new \RuntimeException("Provider menghentikan jawaban lebih awal (finishReason: {$finishReason}).");
+    }
+
+    private function finishReasonFromEvent(string $event): ?string
+    {
+        $data = collect(preg_split('/\r?\n/', $event) ?: [])
+            ->filter(fn (string $line): bool => str_starts_with($line, 'data:'))
+            ->map(fn (string $line): string => trim(substr($line, 5)))
+            ->join('');
+
+        if ($data === '' || $data === '[DONE]') {
+            return null;
+        }
+
+        $decoded = json_decode($data, true);
+        $reason = data_get($decoded, 'candidates.0.finishReason');
+
+        return is_string($reason) && $reason !== '' ? $reason : null;
     }
 
     public function validateCredential(string $secret): bool
