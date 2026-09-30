@@ -87,6 +87,7 @@ return [
         'api_key' => env('QDRANT_API_KEY'),
         'collection' => env('QDRANT_COLLECTION', 'knowledge'),
         'timeout' => (int) env('QDRANT_TIMEOUT', 10),
-        'score_threshold' => (float) env('QDRANT_SCORE_THRESHOLD', 0.35),
+        'score_threshold' => (float) env('QDRANT_SCORE_THRESHOLD', 0.28),
+        'retrieval_limit' => (int) env('RETRIEVAL_LIMIT', 15),
     ],
 ];

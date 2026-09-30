@@ -63,7 +63,12 @@ class ChatService
             'last_message_at' => now(),
         ]);
 
-        $retrieved = $this->retrievalService->retrieve($conversation->user, $conversation, $content);
+        $retrieved = $this->retrievalService->retrieve(
+            $conversation->user,
+            $conversation,
+            $content,
+            (int) config('services.qdrant.retrieval_limit', 15),
+        );
         $sourceLinks = $this->knowledgeLinkExtractor->extractFromResults($retrieved->all(), $content);
         $assistant = $conversation->messages()->create([
             'role' => 'assistant',
