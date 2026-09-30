@@ -216,6 +216,10 @@ class SyncDiscordKnowledge extends Command
             ?? Knowledge::where('title', $uniqueTitle)->first();
 
         if ($knowledge) {
+            if ($knowledge->title !== $uniqueTitle) {
+                $knowledge->update(['title' => $uniqueTitle]);
+            }
+
             // Update if content changed
             $activeContent = $knowledge->activeVersion?->content;
             if ($activeContent !== $content) {
