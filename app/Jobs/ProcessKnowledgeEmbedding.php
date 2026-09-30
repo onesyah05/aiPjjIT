@@ -76,8 +76,11 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
         $embedTitle = (string) $this->knowledgeVersion->knowledge->title;
 
         $knowledgeChunks = $chunks->map(function (string $chunk, int $index) use ($reusable, $embedTitle, &$reusedPointIds) {
-            $contentHash = md5($embedTitle.'
-'.$chunk);
+            // Store the knowledge title with the chunk so keyword search, merge
+            // scoring, and the AI prompt all keep the source context.
+            $chunk = $embedTitle.'
+'.$chunk;
+            $contentHash = md5($chunk);
             $previous = $reusable->get($contentHash);
 
             if ($previous !== null) {
@@ -185,8 +188,7 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
                         $vectors = $embedding->embedBatch(
                             $provider,
                             $credential->encrypted_secret,
-                            $batch->map(fn (KnowledgeChunk $chunk): string => $embedTitle.'
-'.$chunk->content)->all(),
+                            $batch->map(fn (KnowledgeChunk $chunk): string => $chunk->content)->all(),
                         );
 
                         foreach ($batch->values() as $chunkIndex => $chunk) {
