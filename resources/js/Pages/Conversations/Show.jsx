@@ -246,7 +246,11 @@ export default function Show({ conversation, courses }) {
                                                     </span>
                                                     Menyusun jawaban…
                                                 </div>
-                                            ) : null}
+                                            ) : (
+                                                <div className="text-sm leading-6 text-ink">
+                                                    Jawaban tidak tersedia. Silakan coba kirim ulang pertanyaan Anda.
+                                                </div>
+                                            )}
 
                                             {message.sources?.length > 0 && (
                                                 <section className="mt-6 border-t border-stone-200 pt-5" aria-label="Sumber knowledge">
