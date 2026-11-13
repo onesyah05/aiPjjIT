@@ -84,7 +84,12 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             $previous = $reusable->get($contentHash);
 
             if ($previous !== null) {
-                $previous->update(['knowledge_version_id' => $this->knowledgeVersion->id]);
+                // Take this version's position too: the old index can collide
+                // with a new chunk on the (version, chunk_index) unique key.
+                $previous->update([
+                    'knowledge_version_id' => $this->knowledgeVersion->id,
+                    'chunk_index' => $index,
+                ]);
                 $reusedPointIds[] = $previous->vector_external_id;
                 // Identical short chunks can occur many times; each reuse may
                 // claim the previous row only once.
