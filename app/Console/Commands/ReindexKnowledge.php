@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('knowledge:reindex')]
+#[Signature('knowledge:reindex {--fresh : Re-embed every chunk; required after changing the embedding provider or Qdrant collection}')]
 #[Description('Queue all approved active knowledge versions for Qdrant re-indexing')]
 class ReindexKnowledge extends Command
 {
@@ -24,21 +24,20 @@ class ReindexKnowledge extends Command
         }
 
         $queued = 0;
+        $reuseChunks = ! $this->option('fresh');
         Knowledge::query()
             ->where('status', 'approved')
             ->whereNotNull('active_version_id')
             ->with('activeVersion')
-            ->chunkById(100, function ($knowledges) use (&$queued): void {
+            ->chunkById(100, function ($knowledges) use (&$queued, $reuseChunks): void {
                 foreach ($knowledges as $knowledge) {
                     if ($knowledge->activeVersion?->status !== 'approved') {
                         continue;
                     }
 
-                    $knowledge->activeVersion->update([
-                        'processing_status' => 'pending',
-                        'processing_error' => null,
-                    ]);
-                    ProcessKnowledgeEmbedding::dispatch($knowledge->activeVersion);
+                    // The version keeps its current status while queued so it stays
+                    // searchable; the job marks it processing when it starts.
+                    ProcessKnowledgeEmbedding::dispatch($knowledge->activeVersion, $reuseChunks);
                     $queued++;
                 }
             });

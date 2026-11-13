@@ -12,6 +12,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Throwable;
@@ -28,10 +29,21 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
     public int $timeout = 300;
 
     /**
-     * Create a new job instance.
+     * A paragraph closes its chunk when its hash lands on this modulus, so a
+     * chunk averages this many paragraphs.
+     */
+    private const AVERAGE_PARAGRAPHS_PER_CHUNK = 4;
+
+    private const MAX_PARAGRAPHS_PER_CHUNK = 8;
+
+    /**
+     * @param  bool  $reuseChunks  false re-embeds every chunk, required after
+     *                             switching embedding provider or collection
+     *                             because old vectors do not exist there.
      */
     public function __construct(
-        public KnowledgeVersion $knowledgeVersion
+        public KnowledgeVersion $knowledgeVersion,
+        public bool $reuseChunks = true,
     ) {}
 
     /**
@@ -46,18 +58,16 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
         ]);
 
         $content = str_replace("\r\n", "\n", $this->knowledgeVersion->content);
-        $paragraphs = preg_split('/\n{2,}/', $content) ?: [];
-        $chunks = collect($paragraphs)
+        $paragraphs = collect(preg_split('/\n{2,}/', $content) ?: [])
             ->map(fn (string $paragraph): string => trim($paragraph))
             ->filter()
-            ->chunk(4)
-            ->map(fn ($group): string => $group->join("\n\n"))
             ->values();
+        $chunks = $this->chunkParagraphs($paragraphs->all());
 
         // Chunks whose content is unchanged from an already-embedded version of
         // this knowledge are reused as-is: their Qdrant point stays valid and no
         // embedding quota is spent on them.
-        $reusable = KnowledgeChunk::query()
+        $reusable = ! $this->reuseChunks ? collect() : KnowledgeChunk::query()
             ->where('content_hash', '!=', '')
             ->whereNotNull('content_hash')
             ->whereHas('version', function ($query): void {
@@ -274,6 +284,37 @@ class ProcessKnowledgeEmbedding implements ShouldBeUnique, ShouldQueue
             'processing_error' => null,
             'embedded_at' => now(),
         ]);
+    }
+
+    /**
+     * Content-defined chunking: a chunk ends after a paragraph whose own hash
+     * marks a boundary, not after a fixed count. Adding or dropping messages
+     * at either end of a Discord channel then changes only the edge chunks,
+     * so the rest keep their hash and are reused instead of re-embedded.
+     *
+     * @param  array<int, string>  $paragraphs
+     * @return Collection<int, string>
+     */
+    private function chunkParagraphs(array $paragraphs): Collection
+    {
+        $chunks = collect();
+        $current = [];
+
+        foreach ($paragraphs as $paragraph) {
+            $current[] = $paragraph;
+
+            if (count($current) >= self::MAX_PARAGRAPHS_PER_CHUNK
+                || crc32($paragraph) % self::AVERAGE_PARAGRAPHS_PER_CHUNK === 0) {
+                $chunks->push(implode("\n\n", $current));
+                $current = [];
+            }
+        }
+
+        if ($current !== []) {
+            $chunks->push(implode("\n\n", $current));
+        }
+
+        return $chunks;
     }
 
     public function uniqueId(): string
