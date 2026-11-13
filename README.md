@@ -122,6 +122,22 @@ AI_REQUEST_TIMEOUT=60
 AI_MAX_CREDENTIAL_ATTEMPTS=3
 ```
 
+### Provider chat utama (opsional)
+
+Chat dapat memakai provider OpenAI-compatible (misalnya Dahl atau SenseNova) dengan API key milik server. Provider ini dicoba lebih dulu; jika gagal (kuota habis, key ditolak, atau server sibuk), jawaban otomatis memakai pool credential Gemini komunitas.
+
+```dotenv
+CHAT_API_PROVIDER=dahl
+CHAT_API_BASE_URL=https://inference.dahl.global/v1
+CHAT_API_KEY=
+CHAT_API_MODEL=MiniMaxAI/MiniMax-M2.7
+CHAT_API_FALLBACK_MODELS=
+CHAT_API_MAX_TOKENS=8192
+CHAT_API_TIMEOUT=60
+```
+
+Kosongkan `CHAT_API_KEY` untuk hanya memakai pool Gemini. Jangan commit nilai `CHAT_API_KEY`.
+
 Setelah login, buka menu **Kontribusi** untuk menambahkan API key Gemini. Credential disimpan menggunakan encrypted cast Laravel dan tidak ditampilkan kembali dalam bentuk utuh.
 
 ## Qdrant dan embedding

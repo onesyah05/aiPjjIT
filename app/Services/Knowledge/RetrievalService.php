@@ -333,12 +333,14 @@ class RetrievalService
             ->join('knowledges', 'knowledges.id', '=', 'knowledge_versions.knowledge_id')
             ->with('version.knowledge.course')
             ->whereNull('knowledges.deleted_at')
-            // Serve the newest embedded version of each knowledge. The active
+            // Serve the newest ready version of each knowledge. The active
             // version can lag behind while its embedding is still processing;
             // strict matching would make the knowledge invisible to search.
+            // "ready" already implies embedded when Qdrant is on, and must not
+            // require embedding when Qdrant is off (keyword-only retrieval).
             ->whereRaw(
-                'knowledge_versions.id = (select max(kv.id) from knowledge_versions kv where kv.knowledge_id = knowledges.id and kv.status = ? and kv.processing_status = ? and kv.is_embedded = ?)',
-                ['approved', 'ready', true],
+                'knowledge_versions.id = (select max(kv.id) from knowledge_versions kv where kv.knowledge_id = knowledges.id and kv.status = ? and kv.processing_status = ?)',
+                ['approved', 'ready'],
             )
             ->where('knowledge_versions.status', 'approved')
             ->where('knowledge_versions.processing_status', 'ready')

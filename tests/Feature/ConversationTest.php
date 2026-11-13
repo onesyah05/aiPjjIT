@@ -8,6 +8,7 @@ use App\Models\Knowledge;
 use App\Models\KnowledgeChunk;
 use App\Models\KnowledgeVersion;
 use App\Models\User;
+use App\Services\AI\ChatCompletionService;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -154,5 +155,89 @@ class ConversationTest extends TestCase
             (string) data_get($request->data(), 'contents.0.parts.0.text'),
             'https://laravel.com/docs/13.x',
         ));
+    }
+
+    public function test_general_chat_prefers_the_configured_chat_api_and_hides_reasoning(): void
+    {
+        config(['services.chat_api.api_key' => 'server-chat-key', 'services.chat_api.provider' => 'dahl']);
+        $user = User::factory()->create();
+        $conversation = Conversation::query()->create(['user_id' => $user->id, 'mode' => 'general']);
+        Http::preventStrayRequests();
+        Http::fake([
+            'inference.dahl.global/*' => Http::response(
+                implode("\n\n", [
+                    'data: {"choices":[{"delta":{"content":"<thi"},"finish_reason":null}]}',
+                    'data: {"choices":[{"delta":{"content":"nk>pikiran rahasia</th"},"finish_reason":null}]}',
+                    'data: {"choices":[{"delta":{"reasoning":"juga rahasia"},"finish_reason":null}]}',
+                    'data: {"choices":[{"delta":{"content":"ink>\n\nAlgoritma adalah "},"finish_reason":null}]}',
+                    'data: {"choices":[{"delta":{"content":"langkah terstruktur."},"finish_reason":"stop"}]}',
+                    'data: [DONE]',
+                ])."\n\n",
+                200,
+                ['Content-Type' => 'text/event-stream'],
+            ),
+        ]);
+
+        $response = $this->actingAs($user)->post(route('conversations.messages.store', $conversation), [
+            'message' => 'Apa itu algoritma?',
+        ]);
+        $streamedContent = $response->streamedContent();
+
+        $this->assertStringNotContainsString('rahasia', $streamedContent);
+        $this->assertDatabaseHas('messages', [
+            'conversation_id' => $conversation->id,
+            'role' => 'assistant',
+            'status' => 'completed',
+            'provider' => 'dahl',
+            'content' => 'Algoritma adalah langkah terstruktur.',
+        ]);
+        Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer server-chat-key')
+            && $request['model'] === 'MiniMaxAI/MiniMax-M2.7'
+            && $request['stream'] === true);
+    }
+
+    public function test_general_chat_falls_back_to_gemini_pool_when_chat_api_quota_is_exhausted(): void
+    {
+        config(['services.chat_api.api_key' => 'server-chat-key', 'services.chat_api.provider' => 'dahl']);
+        $user = User::factory()->create();
+        $conversation = Conversation::query()->create(['user_id' => $user->id, 'mode' => 'general']);
+        AiCredential::query()->create([
+            'user_id' => $user->id,
+            'provider' => 'gemini',
+            'credential_type' => 'api_key',
+            'encrypted_secret' => 'secret-key-for-fallback-123',
+            'fingerprint' => hash('sha256', 'secret-key-for-fallback-123'),
+            'label' => 'Test fallback',
+            'masked_preview' => '••••k123',
+            'status' => 'active',
+            'community_enabled' => true,
+        ]);
+        Http::preventStrayRequests();
+        Http::fake([
+            'inference.dahl.global/*' => Http::response([
+                'error' => ['code' => 'insufficient_quota', 'message' => 'available tokens exhausted'],
+            ], 402),
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => 'Jawaban dari Gemini.']]]]],
+            ]),
+        ]);
+
+        $this->actingAs($user)->post(route('conversations.messages.store', $conversation), [
+            'message' => 'Apa itu algoritma?',
+        ])->streamedContent();
+
+        $this->assertDatabaseHas('messages', [
+            'conversation_id' => $conversation->id,
+            'role' => 'assistant',
+            'status' => 'completed',
+            'provider' => 'gemini',
+            'content' => 'Jawaban dari Gemini.',
+        ]);
+        $this->assertDatabaseHas('ai_request_logs', [
+            'provider' => 'dahl',
+            'status' => 'failed',
+            'error_code' => 'insufficient_quota',
+        ]);
+        $this->assertFalse(app(ChatCompletionService::class)->isAvailable());
     }
 }

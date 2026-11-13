@@ -19,12 +19,17 @@ class HandleDiscordMention implements ShouldQueue
 
     public int $tries = 4;
 
-    public int $timeout = 80;
+    /**
+     * Room for the primary chat API (CHAT_API_TIMEOUT) plus a Gemini fallback;
+     * kept below the database queue's retry_after (150s) so a slow answer is
+     * never picked up a second time while still running.
+     */
+    public int $timeout = 140;
 
     /** @return array<int, int> */
     public function backoff(): array
     {
-        // Gemini overload (HTTP 503) spikes are usually temporary; wait them out.
+        // Provider overload (HTTP 503) spikes are usually temporary; wait them out.
         return [30, 60, 120];
     }
 

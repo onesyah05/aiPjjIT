@@ -81,6 +81,22 @@ return [
         'max_attempts' => (int) env('AI_MAX_CREDENTIAL_ATTEMPTS', 6),
     ],
 
+    /*
+     * Primary chat provider using a server-owned key on an OpenAI-compatible
+     * endpoint. Leave CHAT_API_KEY empty to use only the Gemini community pool,
+     * which also serves as the fallback when this provider fails.
+     */
+    'chat_api' => [
+        'provider' => env('CHAT_API_PROVIDER', 'dahl'),
+        'base_url' => env('CHAT_API_BASE_URL', 'https://inference.dahl.global/v1'),
+        'api_key' => env('CHAT_API_KEY'),
+        'model' => env('CHAT_API_MODEL', 'MiniMaxAI/MiniMax-M2.7'),
+        'fallback_models' => array_values(array_filter(explode(',', (string) env('CHAT_API_FALLBACK_MODELS', '')))),
+        'temperature' => (float) env('CHAT_API_TEMPERATURE', 0.25),
+        'max_tokens' => (int) env('CHAT_API_MAX_TOKENS', 8192),
+        'timeout' => (int) env('CHAT_API_TIMEOUT', 60),
+    ],
+
     'qdrant' => [
         'enabled' => (bool) env('QDRANT_ENABLED', false),
         'url' => env('QDRANT_URL', 'http://localhost:6333'),

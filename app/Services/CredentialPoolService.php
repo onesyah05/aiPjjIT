@@ -11,13 +11,11 @@ use Illuminate\Support\Facades\Log;
 class CredentialPoolService
 {
     /**
-     * Get the best available API credential from the pool.
-     * Selects an active credential that hasn't hit the rate limit recently,
-     * ordered by the lowest quota used.
+     * Active community credentials that are off cooldown and under their daily
+     * limit, least recently used first, then most reliable first.
      *
-     * @return AiCredential|null
+     * @return Collection<int, AiCredential>
      */
-    /** @return Collection<int, AiCredential> */
     public function getAvailableCredentials(int $limit = 3, ?string $provider = null): Collection
     {
         return AiCredential::query()
@@ -60,9 +58,7 @@ class CredentialPoolService
     }
 
     /**
-     * Increment the quota used for a credential.
-     *
-     * @param  int  $amount
+     * Record that a request is about to be sent with this credential.
      */
     public function recordAttempt(AiCredential $credential): void
     {

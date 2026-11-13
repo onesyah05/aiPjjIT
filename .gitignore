@@ -30,3 +30,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local debugging scratch files
+/test_*.php
+/output*.txt
+/*_log.txt

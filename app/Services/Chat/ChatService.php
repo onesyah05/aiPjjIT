@@ -5,6 +5,7 @@ namespace App\Services\Chat;
 use App\Models\AiRequestLog;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\AI\ChatCompletionService;
 use App\Services\AI\GeminiService;
 use App\Services\CredentialPoolService;
 use App\Services\Knowledge\KnowledgeLinkExtractor;
@@ -12,6 +13,7 @@ use App\Services\Knowledge\RetrievalService;
 use App\Services\PromptBuilderService;
 use Generator;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -22,6 +24,7 @@ class ChatService
         private PromptBuilderService $promptBuilder,
         private CredentialPoolService $credentialPool,
         private GeminiService $gemini,
+        private ChatCompletionService $chatApi,
         private KnowledgeLinkExtractor $knowledgeLinkExtractor,
     ) {}
 
@@ -108,6 +111,14 @@ class ChatService
             $recentMessages,
         );
 
+        if ($this->chatApi->isAvailable()) {
+            $completed = yield from $this->streamWithChatApi($conversation, $assistant, $prompt, $retrieved->all(), $sourceLinks);
+
+            if ($completed) {
+                return;
+            }
+        }
+
         $credentials = $this->credentialPool->getAvailableCredentials(
             (int) config('services.gemini.max_attempts', 3),
             'gemini',
@@ -185,26 +196,18 @@ class ChatService
                     throw new RuntimeException('Provider mengembalikan respons kosong.');
                 }
 
-                $linkAppendix = $this->knowledgeLinkExtractor->appendixFor($generatedContent, $sourceLinks);
-
-                if ($linkAppendix !== '') {
-                    $generatedContent .= $linkAppendix;
-                    yield ['content' => $linkAppendix];
-                }
-
                 $this->credentialPool->recordSuccess($credential);
-                $latency = (int) round((hrtime(true) - $startedAt) / 1_000_000);
-                $assistant->update([
-                    'content' => $generatedContent,
-                    'status' => 'completed',
-                    'provider' => $credential->provider,
-                    'model' => $usedModel,
-                    'latency_ms' => $latency,
-                    'error_code' => null,
-                ]);
-                $sources = $this->persistSources($assistant, $retrieved->all());
-                $log->update(['status' => 'completed', 'latency_ms' => $latency, 'model' => $usedModel]);
-                yield ['sources' => $sources, 'message_id' => $assistant->id];
+
+                yield from $this->completeAnswer(
+                    $assistant,
+                    $log,
+                    $generatedContent,
+                    $sourceLinks,
+                    $retrieved->all(),
+                    $credential->provider,
+                    $usedModel,
+                    $startedAt,
+                );
 
                 return;
             } catch (RequestException $exception) {
@@ -254,6 +257,161 @@ class ChatService
 
         $assistant->update(['status' => 'failed', 'error_code' => 'credentials_unavailable']);
         throw new RuntimeException('Semua credential AI sedang tidak tersedia.');
+    }
+
+    /**
+     * Try the server-configured provider first. Returns false when it failed
+     * before producing any text, so the caller can fall back to the Gemini pool.
+     *
+     * @param  array<int, array{chunk: mixed, content: string, score: float}>  $retrieved
+     * @param  array<int, array<string, mixed>>  $sourceLinks
+     * @return Generator<int, array{content?: string, sources?: array<int, array<string, mixed>>, message_id?: int}, mixed, bool>
+     */
+    private function streamWithChatApi(
+        Conversation $conversation,
+        Message $assistant,
+        string $prompt,
+        array $retrieved,
+        array $sourceLinks,
+    ): Generator {
+        $startedAt = hrtime(true);
+        $generatedContent = '';
+        $models = $this->chatApi->models();
+        $usedModel = $models[0] ?? '';
+        $log = AiRequestLog::query()->create([
+            'user_id' => $conversation->user_id,
+            'conversation_id' => $conversation->id,
+            'message_id' => $assistant->id,
+            'operation' => 'chat',
+            'provider' => $this->chatApi->providerName(),
+            'model' => $usedModel,
+            'status' => 'streaming',
+            'retrieved_chunks' => count($retrieved),
+        ]);
+
+        try {
+            $lastModelException = null;
+
+            foreach ($models as $model) {
+                try {
+                    foreach ($this->chatApi->stream($prompt, $model) as $chunk) {
+                        $generatedContent .= $chunk;
+                        yield ['content' => $chunk];
+                    }
+
+                    $usedModel = $model;
+                    $lastModelException = null;
+
+                    break;
+                } catch (RequestException $exception) {
+                    // Unknown or overloaded model: try the next one on the same key.
+                    if ($generatedContent !== '' || ! in_array($exception->response->status(), [404, 429, 503], true)) {
+                        throw $exception;
+                    }
+
+                    $lastModelException = $exception;
+                }
+            }
+
+            if ($lastModelException !== null) {
+                throw $lastModelException;
+            }
+
+            if ($generatedContent === '') {
+                throw new RuntimeException('Provider mengembalikan respons kosong.');
+            }
+        } catch (Throwable $exception) {
+            $status = $exception instanceof RequestException ? $exception->response->status() : null;
+            $errorCode = match (true) {
+                $status === 402 => 'insufficient_quota',
+                $status === 429 => 'rate_limited',
+                $status !== null => "http_{$status}",
+                default => 'provider_error',
+            };
+
+            $log->update([
+                'status' => 'failed',
+                'error_code' => $errorCode,
+                'latency_ms' => (int) round((hrtime(true) - $startedAt) / 1_000_000),
+            ]);
+            Log::warning('Chat API provider failed.', [
+                'provider' => $this->chatApi->providerName(),
+                'error_code' => $errorCode,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $pauseSeconds = match (true) {
+                in_array($status, [401, 402, 403], true) => 600,
+                $status === 429 => 60,
+                $status !== null && $status >= 500 => 30,
+                default => 0,
+            };
+
+            if ($pauseSeconds > 0) {
+                $this->chatApi->pause($pauseSeconds);
+            }
+
+            if ($generatedContent !== '') {
+                $assistant->update([
+                    'content' => $generatedContent,
+                    'status' => 'failed',
+                    'error_code' => 'stream_interrupted',
+                ]);
+
+                throw new RuntimeException('Streaming jawaban terputus. Sebagian jawaban tetap disimpan.');
+            }
+
+            return false;
+        }
+
+        yield from $this->completeAnswer(
+            $assistant,
+            $log,
+            $generatedContent,
+            $sourceLinks,
+            $retrieved,
+            $this->chatApi->providerName(),
+            $usedModel,
+            $startedAt,
+        );
+
+        return true;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $sourceLinks
+     * @param  array<int, array{chunk: mixed, content: string, score: float}>  $retrieved
+     * @return Generator<int, array{content?: string, sources?: array<int, array<string, mixed>>, message_id?: int}>
+     */
+    private function completeAnswer(
+        Message $assistant,
+        AiRequestLog $log,
+        string $generatedContent,
+        array $sourceLinks,
+        array $retrieved,
+        string $provider,
+        string $model,
+        int $startedAt,
+    ): Generator {
+        $linkAppendix = $this->knowledgeLinkExtractor->appendixFor($generatedContent, $sourceLinks);
+
+        if ($linkAppendix !== '') {
+            $generatedContent .= $linkAppendix;
+            yield ['content' => $linkAppendix];
+        }
+
+        $latency = (int) round((hrtime(true) - $startedAt) / 1_000_000);
+        $assistant->update([
+            'content' => $generatedContent,
+            'status' => 'completed',
+            'provider' => $provider,
+            'model' => $model,
+            'latency_ms' => $latency,
+            'error_code' => null,
+        ]);
+        $sources = $this->persistSources($assistant, $retrieved);
+        $log->update(['status' => 'completed', 'latency_ms' => $latency, 'model' => $model]);
+        yield ['sources' => $sources, 'message_id' => $assistant->id];
     }
 
     /**

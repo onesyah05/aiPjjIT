@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 class DiscordService
 {
     protected string $token;
+
     protected string $baseUrl = 'https://discord.com/api/v10';
 
     public function __construct()
@@ -20,19 +21,20 @@ class DiscordService
      */
     public function getChannel(string $channelId): ?array
     {
-        if (!$this->token) {
+        if (! $this->token) {
             return null;
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bot ' . $this->token,
+            'Authorization' => 'Bot '.$this->token,
         ])->get("{$this->baseUrl}/channels/{$channelId}");
 
         if ($response->successful()) {
             return $response->json();
         }
 
-        Log::error("Failed to fetch Discord channel {$channelId}: " . $response->body());
+        Log::error("Failed to fetch Discord channel {$channelId}: ".$response->body());
+
         return null;
     }
 
@@ -41,8 +43,9 @@ class DiscordService
      */
     public function getChannelMessages(string $channelId, int $limit = 500): array
     {
-        if (!$this->token) {
+        if (! $this->token) {
             Log::warning('Discord Bot Token is not configured.');
+
             return [];
         }
 
@@ -52,17 +55,17 @@ class DiscordService
         while (count($allMessages) < $limit) {
             $fetchLimit = min(100, $limit - count($allMessages));
             $query = ['limit' => $fetchLimit];
-            
+
             if ($lastMessageId) {
                 $query['before'] = $lastMessageId;
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bot ' . $this->token,
+                'Authorization' => 'Bot '.$this->token,
             ])->get("{$this->baseUrl}/channels/{$channelId}/messages", $query);
 
-            if (!$response->successful()) {
-                Log::error("Failed to fetch Discord messages for channel {$channelId}: " . $response->body());
+            if (! $response->successful()) {
+                Log::error("Failed to fetch Discord messages for channel {$channelId}: ".$response->body());
                 break;
             }
 
@@ -83,40 +86,61 @@ class DiscordService
      */
     public function getActiveThreads(string $guildId): array
     {
-        if (!$this->token) {
+        if (! $this->token) {
             return [];
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bot ' . $this->token,
+            'Authorization' => 'Bot '.$this->token,
         ])->get("{$this->baseUrl}/guilds/{$guildId}/threads/active");
 
         if ($response->successful()) {
             return $response->json()['threads'] ?? [];
         }
 
-        Log::error("Failed to fetch Discord active threads for guild {$guildId}: " . $response->body());
+        Log::error("Failed to fetch Discord active threads for guild {$guildId}: ".$response->body());
+
         return [];
     }
 
     /**
-     * Get archived threads for a channel
+     * Get every public archived thread of a channel, following Discord's
+     * `has_more` pagination (one page holds at most 100 threads).
+     *
+     * @return array<int, array<string, mixed>>
      */
-    public function getArchivedThreads(string $channelId): array
+    public function getArchivedThreads(string $channelId, int $maxPages = 20): array
     {
-        if (!$this->token) {
+        if (! $this->token) {
             return [];
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bot ' . $this->token,
-        ])->get("{$this->baseUrl}/channels/{$channelId}/threads/archived/public");
+        $threads = [];
+        $before = null;
 
-        if ($response->successful()) {
-            return $response->json()['threads'] ?? [];
+        for ($page = 0; $page < $maxPages; $page++) {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bot '.$this->token,
+            ])->get("{$this->baseUrl}/channels/{$channelId}/threads/archived/public", array_filter([
+                'limit' => 100,
+                'before' => $before,
+            ]));
+
+            if (! $response->successful()) {
+                Log::error("Failed to fetch Discord archived threads for channel {$channelId}: ".$response->body());
+
+                break;
+            }
+
+            $pageThreads = $response->json('threads') ?? [];
+            $threads = array_merge($threads, $pageThreads);
+            $before = data_get(end($pageThreads) ?: [], 'thread_metadata.archive_timestamp');
+
+            if (! $response->json('has_more') || $before === null) {
+                break;
+            }
         }
 
-        Log::error("Failed to fetch Discord archived threads for channel {$channelId}: " . $response->body());
-        return [];
+        return $threads;
     }
 }

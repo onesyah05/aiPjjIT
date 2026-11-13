@@ -21,6 +21,7 @@ class AiCredentialTest extends TestCase
         Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['models' => []])]);
 
         $response = $this->actingAs($user)->post(route('ai-credentials.store'), [
+            'provider' => 'gemini',
             'label' => 'Credential pribadi',
             'secret' => $secret,
             'community_enabled' => true,
